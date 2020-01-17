@@ -44,6 +44,7 @@ validate_ip_address(char* ip){
     return VALIDATION_SUCCESS;
 
 }
+void
 nw_init_cli(){
 
     init_libcli();

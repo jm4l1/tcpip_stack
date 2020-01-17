@@ -2,9 +2,10 @@ CC=gcc
 CFLAGS=-g
 TARGET:=test
 CLILIBDIR=lib/CommandParser
-LIBS=-lcli
+LIBS=-lcli -lpthread
 OBJS=gluethread/glthread.o \
 	  graph.o \
+	  communications.o \
 	  topologies.o \
 	  net.o \
 	  nwcli.o \
@@ -26,6 +27,8 @@ utils.o:utils.c
 	${CC} ${CFLAGS} -c -I . utils.c -o utils.o
 nwcli.o:nwcli.c
 	${CC} ${CFLAGS} -c -I . nwcli.c -o nwcli.o
+communications.o:communications.c
+	${CC} ${CFLAGS} -c -I . communications.c -o communications.o
 ${CLILIBDIR}/libcli.a:
 	(cd ${CLILIBDIR}; make)
 clean:
