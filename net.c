@@ -85,7 +85,7 @@ void dump_nw_interface(interface_t* intf){
     };
     printf("Interface Name : %s\n" , intf->if_name );
     printf("\tNbr Node %s, Local Node : %s , cost = %d\n" , nbr->node_name , intf->if_name , intf->link->cost );
-    printf("\tIP Addr : %s(%s/%d )  MAC : %02x:%02x:%02x:%02x:%02x:%02x \n" , intf->intf_nw_props.ip_add.ip_addr , mask , ip_subnet  , IF_MAC(intf)[0] , IF_MAC(intf)[1] , IF_MAC(intf)[2] , IF_MAC(intf)[3] , IF_MAC(intf)[4] , IF_MAC(intf)[5]);
+    printf("\tIP Addr : %s(%s/%d )  MAC : %02x:%02x:%02x:%02x:%02x:%02x \n" , IF_IP(intf), ip_subnet  ,mask ,  IF_MAC(intf)[0] , IF_MAC(intf)[1] , IF_MAC(intf)[2] , IF_MAC(intf)[3] , IF_MAC(intf)[4] , IF_MAC(intf)[5]);
 }
 interface_t*
 node_get_matching_subnet_interface(node_t* node , char* ip_addr){
