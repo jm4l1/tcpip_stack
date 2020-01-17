@@ -1,0 +1,2 @@
+#define CMDCODE_SHOW_NW_TOPOLOGY 1 // show topology
+#define CMDCODE_RUN_NODE_RESOLVE_ARP 300 //

@@ -7,7 +7,8 @@ OBJS=gluethread/glthread.o \
 	  graph.o \
 	  topologies.o \
 	  net.o \
-	  utils.o
+	  nwcli.o \
+	  utils.o \
 
 ${TARGET}:testapp.o ${OBJS} ${CLILIBDIR}/libcli.a
 	${CC} ${CFLAGS} testapp.o ${OBJS} -o test -L ${CLILIBDIR} ${LIBS}
@@ -23,6 +24,8 @@ net.o:net.c
 	${CC} ${CFLAGS} -c -I . net.c -o net.o
 utils.o:utils.c
 	${CC} ${CFLAGS} -c -I . utils.c -o utils.o
+nwcli.o:nwcli.c
+	${CC} ${CFLAGS} -c -I . nwcli.c -o nwcli.o
 ${CLILIBDIR}/libcli.a:
 	(cd ${CLILIBDIR}; make)
 clean:
