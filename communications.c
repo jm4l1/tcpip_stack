@@ -46,7 +46,7 @@ init_udp_socket(node_t* node){
 }
 // function for thread to execute
 static void
-_pkt_receive(node_t* receiving_node,char* *pkt_with_aux_data,unsigned int pkt_size  ){
+_pkt_receive(node_t* receiving_node,char** pkt_with_aux_data,unsigned int pkt_size  ){
     
     char* recv_intf_name = pkt_with_aux_data;
     interface_t* recv_intf = get_node_if_by_name(receiving_node , recv_intf_name);
@@ -137,6 +137,7 @@ _send_pkt_out(int sock_fd , char *pkt_data , unsigned int pkt_size , unsigned in
     dest_addr.sin_addr = *((struct in_addr *)host->h_addr);
 
     rc = sendto(sock_fd,pkt_data,pkt_size,0,(struct sockaddr*)&dest_addr , sizeof(struct sockaddr));
+    return rc;
 }
 int
 send_pkt_out(char* pkt , unsigned int pkt_size , interface_t *intf){
@@ -144,21 +145,16 @@ send_pkt_out(char* pkt , unsigned int pkt_size , interface_t *intf){
     int rc = 0;
     node_t* sending_node = intf->att_node;
     node_t* nbr_node = get_nbr_node(intf);
-
     if(!nbr_node) return -1;
 
     unsigned int dst_udp_port_no = nbr_node->udp_port_number;
-
     int sock = socket(AF_INET , SOCK_DGRAM , IPPROTO_UDP);
-
     if(sock < 0 ){
         printf("Error : Sending socker created failed , errno = %d" , errno);
     }
-
+    
     interface_t* remote_intf  = &intf->link->intf1 == intf ? &intf->link->intf2 : &intf->link->intf1;
-
     memset(send_buffer , 0 , MAX_PACKET_BUFFER_SIZE);
-
     char* pkt_wth_aux_data = send_buffer;
     strcpy(pkt_wth_aux_data , remote_intf->if_name );
     pkt_wth_aux_data[IF_NAME_SIZE] = '\0';

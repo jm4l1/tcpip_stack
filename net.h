@@ -17,7 +17,7 @@ typedef struct ip_add_ {
 //stutcure for MAC address in from 
 // xx:xx:xx:xx:xx:xx
 typedef struct mac_add_{
-    unsigned char mac[8];
+    unsigned char mac[6];
 }mac_addr_t;
 
 typedef struct node_nw_prop_{

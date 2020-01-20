@@ -7,6 +7,7 @@ OBJS=gluethread/glthread.o \
 	  graph.o \
 	  communications.o \
 	  topologies.o \
+	  layer2/layer2.o \
 	  net.o \
 	  nwcli.o \
 	  utils.o \
@@ -16,7 +17,9 @@ ${TARGET}:testapp.o ${OBJS} ${CLILIBDIR}/libcli.a
 testapp.o:testapp.c
 	${CC} ${CFLAGS} -c testapp.c -o testapp.o
 glthread/glthread.o:gluethread/glthread.c
-	${CC} ${CFLAGS} -c -I gluethread gluethread/glthread.c -o gluethread/glthread.o
+	${CC} ${CFLAGS} -c -I layer2 layer2/glthread.c -o layer2/glthread.o
+layer2/layer2.o:layer2/layer2.c
+	${CC} ${CFLAGS} -c -I layer2 layer2/layer2.c -o layer2/layer2.o
 graph.o:graph.c
 	${CC} ${CFLAGS} -c -I . graph.c -o graph.o
 topologies.o:topologies.c
