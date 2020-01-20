@@ -9,6 +9,7 @@
 #include <sys/utsname.h>
 #include <errno.h>
 #include <netdb.h> 
+#include <unistd.h>
 
 
 static char recv_buffer[MAX_PACKET_BUFFER_SIZE];
@@ -45,11 +46,24 @@ init_udp_socket(node_t* node){
 }
 // function for thread to execute
 static void
-_pkt_receive(
-    node_t* receiving_node,
-    char* *pkt_with_aux_data,
-    unsigned int pkt_size
-){
+_pkt_receive(node_t* receiving_node,char* *pkt_with_aux_data,unsigned int pkt_size  ){
+    
+    char* recv_intf_name = pkt_with_aux_data;
+    interface_t* recv_intf = get_node_if_by_name(receiving_node , recv_intf_name);
+    printf("Info : Incoming packet node %s on interface %s\n" , receiving_node->node_name , recv_intf->if_name);
+    if(!recv_intf){
+        printf("Error : Pkt recvd on unknown interface %s on node %s\n", recv_intf->if_name , receiving_node-> node_name);
+        return;
+    }
+    pkt_receive(receiving_node , recv_intf , pkt_with_aux_data + IF_NAME_SIZE, pkt_size - IF_NAME_SIZE);
+}
+int
+pkt_receive( node_t* node , interface_t* intf , char *pkt , unsigned int pkt_size){
+    //ingress of packet into tcp ip stack (at DL layer)
+    printf("Info : Pkt Recvd on node %s on IF %s\n" , node->node_name , intf->if_name );
+
+    return  0;
+
 }
 static void*
 _network_start_pkt_receiver_thread(void *arg){
@@ -117,7 +131,7 @@ _send_pkt_out(int sock_fd , char *pkt_data , unsigned int pkt_size , unsigned in
     int rc;
     struct sockaddr_in dest_addr;
 
-    struct hostent *host = (struct hostent *) gethostbyname("127.0.0.1");
+    struct hostent *host = (struct hostent *) gethostbyname(LOCALHOST);
     dest_addr.sin_family = AF_INET;
     dest_addr.sin_port = dst_udp_port_no;
     dest_addr.sin_addr = *((struct in_addr *)host->h_addr);
@@ -151,7 +165,19 @@ send_pkt_out(char* pkt , unsigned int pkt_size , interface_t *intf){
     memcpy(pkt_wth_aux_data + IF_NAME_SIZE , pkt , pkt_size);
 
     rc = _send_pkt_out(sock ,pkt_wth_aux_data , pkt_size + IF_NAME_SIZE ,dst_udp_port_no);
+    printf("Info : Pkt Sent from node %s on IF  %s\n" , sending_node->node_name , intf->if_name );
+
     close(sock);
     return rc;
 
+}
+int
+send_pkt_flood(node_t *node, interface_t *exempted_intf,char *pkt, unsigned int pkt_size){
+    for(int i = 0 ; i < MAX_INTF_PER_NODE ; i++){
+        interface_t* intf = node->intf[i];
+        if(!intf) continue;
+        if(intf == exempted_intf) continue;
+        send_pkt_out(pkt ,  sizeof(pkt) , intf);
+    }
+    return 0;
 }
