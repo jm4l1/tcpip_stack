@@ -12,15 +12,26 @@ graph_t* topo = NULL ;
 int
 main(int argc, char** argv){
 
-    ethernet_hdr_t* test;
-    char dummy[19] = "this is dummy data\0";
-    test = ALLOC_ETH_HDR_WITH_PAYLOAD(dummy , sizeof(dummy));
+    nw_init_cli();
+    // topo = build_first_topo();
+    topo = build_linear_topo();
+    start_shell();
 
-    printf("%s\n%s\n%d\n%s\n%u\n" , test->dest_mac.mac , test->src_mac.mac , test->length , test->payload ,*ETH_FCS(test,19));
+    //test code
+    // ethernet_hdr_t* test;
+    // char dummy[19] = "this is dummy data";
+    // test = ALLOC_ETH_HDR_WITH_PAYLOAD(dummy , sizeof(dummy));
 
-    // nw_init_cli();
-    // // topo = build_first_topo();
-    // topo = build_linear_topo();
+    // printf("%s\n%s\n%d\n%s\n%u\n" , test->dest_mac.mac , test->src_mac.mac , test->length , test->payload ,*ETH_FCS(test,19));
+
+
+    // char buffer[100] = "2222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222";
+    // memcpy( buffer, dummy , 18);
+    // printf("before buffer - %s\n", buffer);
+    // char* new_buff = pkt_buffer_shift_right(buffer , 18 , 100);
+    // printf("after buffer - %s\n", new_buff);
+
+
     
     // // {
     // //     sleep(2);
@@ -33,6 +44,5 @@ main(int argc, char** argv){
 
     // //     sleep(2);
     // // }
-    // start_shell();
     return 0;
 };
