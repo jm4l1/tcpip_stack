@@ -99,22 +99,22 @@ static inline bool_t
 l2_frame_recv_qualify_on_interface(interface_t* intf , ethernet_frame_t* eth_frame){
     unsigned char* dest_mac = eth_frame->dest_mac.mac;
     if(!IS_INTF_L3_MODE(intf) && IF_L2_MODE(intf) == L2_MODE_UNKNOWN) {
-        printf("IP address not configured on IF : %s\n" , intf->if_name);
+        if(intf->att_node->debug_status == DEBUG_ON) printf("Info : %s - IP address not configured on IF : %s\n" , intf->att_node->node_name , intf->if_name);
         return FALSE;
     }
     if(memcmp(IF_MAC(intf) ,dest_mac , sizeof((mac_addr_t*)0)->mac) == 0){
-        printf("Frame with MAC of %s\n" , intf->if_name);
+        if(intf->att_node->debug_status == DEBUG_ON) printf("Info : %s - Frame with MAC of %s\n" , intf->att_node->node_name , intf->if_name);
         return TRUE;
     }
     if(IS_MAC_BROADCAST_ADDR(dest_mac)){
-        printf("Broadcast Frame received %x:%x:%x:%x:%x:%x \n"  , eth_frame->src_mac.mac[0], eth_frame->src_mac.mac[1] , eth_frame->src_mac.mac[2] , eth_frame->src_mac.mac[3] , eth_frame->src_mac.mac[4] , eth_frame->src_mac.mac[5]);
+        if(intf->att_node->debug_status == DEBUG_ON) printf("Info : %s - Broadcast Frame received %x:%x:%x:%x:%x:%x \n" , intf->att_node->node_name  , eth_frame->src_mac.mac[0], eth_frame->src_mac.mac[1] , eth_frame->src_mac.mac[2] , eth_frame->src_mac.mac[3] , eth_frame->src_mac.mac[4] , eth_frame->src_mac.mac[5]);
         return TRUE;
     }
     if(IF_L2_MODE(intf) != L2_MODE_UNKNOWN){
-        printf("Interface in operating in L2 mode\n");
+        if(intf->att_node->debug_status == DEBUG_ON) printf("Info : %s - Interface in operating in L2 mode\n" , intf->att_node->node_name);
         return TRUE;
     }
-    printf("Dropping out of qualify function %x:%x:%x:%x:%x:%x \n"  , eth_frame->src_mac.mac[0], eth_frame->src_mac.mac[1] , eth_frame->src_mac.mac[2] , eth_frame->src_mac.mac[3] , eth_frame->src_mac.mac[4] , eth_frame->src_mac.mac[5]);
+    if(intf->att_node->debug_status == DEBUG_ON) printf("Info : %s - Dropping out of qualify function %x:%x:%x:%x:%x:%x \n" , intf->att_node->node_name  , eth_frame->src_mac.mac[0], eth_frame->src_mac.mac[1] , eth_frame->src_mac.mac[2] , eth_frame->src_mac.mac[3] , eth_frame->src_mac.mac[4] , eth_frame->src_mac.mac[5]);
     return FALSE;
 }
 

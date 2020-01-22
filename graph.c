@@ -23,6 +23,7 @@ create_graph_node(graph_t* graph, char* node_name){
     init_node_nw_prop(&node->node_nw_prop);
     init_glthread(&node->graph_glue);
     glthread_add_next(&graph->node_list,&node->graph_glue);
+    node->debug_status = DEBUG_OFF;
     return node;
 }
 

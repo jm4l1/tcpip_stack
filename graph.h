@@ -58,6 +58,10 @@ struct link_ {
     unsigned int cost;
 };
 
+typedef enum debug_status {
+    DEBUG_ON ,
+    DEBUG_OFF
+}debug_status_t;
 struct node_ {
     char node_name[NODE_NAME_SIZE];
     interface_t *intf[MAX_INTF_PER_NODE];
@@ -65,6 +69,7 @@ struct node_ {
     node_nw_prop_t node_nw_prop;
     int udp_sock_fd;
     unsigned int udp_port_number;
+    debug_status_t debug_status;
 };
 
 GLTHREAD_TO_STRUCT(graph_glue_to_node, node_t, graph_glue);

@@ -51,9 +51,9 @@ _pkt_receive(node_t *receiving_node,char *pkt_with_aux_data,unsigned int pkt_siz
     
     char* recv_intf_name = pkt_with_aux_data;
     interface_t* recv_intf = get_node_if_by_name(receiving_node , recv_intf_name);
-    printf("Info : Incoming packet node %s on interface %s\n" , receiving_node->node_name , recv_intf->if_name);
+    if(receiving_node->debug_status == DEBUG_ON) printf("Info : Incoming packet node %s on interface %s\n" , receiving_node->node_name , recv_intf->if_name);
     if(!recv_intf){
-        printf("Error : Pkt recvd on unknown interface %s on node %s\n", recv_intf->if_name , receiving_node-> node_name);
+        if(receiving_node->debug_status == DEBUG_ON) printf("Error : Pkt recvd on unknown interface %s on node %s\n", recv_intf->if_name , receiving_node-> node_name);
         return;
     }
     pkt_receive(receiving_node , recv_intf , pkt_with_aux_data + IF_NAME_SIZE, pkt_size - IF_NAME_SIZE);
@@ -62,7 +62,7 @@ int
 pkt_receive( node_t* node , interface_t* intf , char *pkt , unsigned int pkt_size){
     
     //ingress of packet into tcp ip stack (at DL layer)
-    printf("Info : Pkt Recvd (%u bytes) on node %s on IF %s\n" , pkt_size , node->node_name , intf->if_name );
+    if(node->debug_status == DEBUG_ON) printf("Info : Pkt Recvd (%u bytes) on node %s on IF %s\n" , pkt_size , node->node_name , intf->if_name );
 
     layer2_frame_recv(node , intf , pkt , pkt_size);
 
@@ -164,7 +164,7 @@ send_pkt_out(char* pkt , unsigned int pkt_size , interface_t *intf){
     memcpy(pkt_wth_aux_data + IF_NAME_SIZE , pkt , pkt_size);
 
     rc = _send_pkt_out(sock ,pkt_wth_aux_data , pkt_size + IF_NAME_SIZE ,dst_udp_port_no);
-    printf("Info : Pkt Sent from node %s on IF  %s\n" , sending_node->node_name , intf->if_name );
+     if(sending_node->debug_status == DEBUG_ON) printf("Info : Pkt Sent from node %s on IF  %s\n" , sending_node->node_name , intf->if_name );
 
     close(sock);
     return rc;
