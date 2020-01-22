@@ -6,6 +6,8 @@
 
 extern graph_t *topo;
 
+extern void send_arp_broadcast_rquest(node_t *node , interface_t *oif , char *ip_addr);
+extern void arp_table_dump( arp_table_t* arp_table);
 static int 
 show_nw_topology_handler (
     param_t* param,                 //parameter passed to handler call back
@@ -24,9 +26,8 @@ show_nw_topology_handler (
     }
     return 0;
 }
-
-static int
-arp_handler(
+static int 
+show_arp_handler(
     param_t* param,                 //parameter passed to handler call back
     ser_buff_t * tlv_buff,          // tlv structure described param
     op_mode enable_or_disable       // is command enable or disable function
@@ -34,10 +35,45 @@ arp_handler(
     tlv_struct_t *tlv = NULL;
     char *node_name = NULL;
     char *ip_address = NULL;
+    node_t* node;
     TLV_LOOP_BEGIN(tlv_buff , tlv){
-        printf("%s : %s\n" , tlv->leaf_id , tlv->value);
+        if(strcmp(tlv->leaf_id  , "node-name") == 0)
+            node_name = tlv->value ;
     }TLV_LOOP_END;
+    node = get_node_by_node_name(topo , node_name);
+    if(!node) {
+        printf("Node %s, not found in topology\n", node_name);
+        return -1;
+    }
+
+    arp_table_dump(node->node_nw_prop.arp_table);
     return 0;
+
+}
+static int
+resolve_arp_handler(
+    param_t* param,                 //parameter passed to handler call back
+    ser_buff_t * tlv_buff,          // tlv structure described param
+    op_mode enable_or_disable       // is command enable or disable function
+){
+    tlv_struct_t *tlv = NULL;
+    char *node_name = NULL;
+    char *ip_address = NULL;
+    node_t* node;
+    TLV_LOOP_BEGIN(tlv_buff , tlv){
+        if(strcmp(tlv->leaf_id  , "node-name") == 0)
+            node_name = tlv->value ;
+        if(strcmp(tlv->leaf_id  , "ip-address") == 0)
+            ip_address = tlv->value ;
+    }TLV_LOOP_END;
+    node = get_node_by_node_name(topo , node_name);
+    if(!node) {
+        printf("Node %s, not found in topology\n", node_name);
+        return -1;
+    }
+    send_arp_broadcast_rquest(node,NULL,ip_address);
+    return 0;
+
 }
 static int
 validate_ip_address(char* ip){
@@ -62,6 +98,51 @@ nw_init_cli(){
         init_param( &topology , CMD , "topology" , show_nw_topology_handler ,0 , INVALID , 0 , "Dump Completed Network Topolgy");
         libcli_register_param(show , &topology);
         set_param_cmd_code(&topology , CMDCODE_SHOW_NW_TOPOLOGY);
+    }
+
+    {
+        //node <node-name> arp
+            static param_t node;
+            init_param(&node,
+                        CMD,
+                        "node",
+                        0,
+                        0,
+                        INVALID,
+                        0,
+                        "Help : node"
+                    );
+            libcli_register_param(show , &node);{
+                //<node-name>
+                static param_t node_name;
+                init_param(&node_name,
+                        LEAF,
+                        0,
+                        0,
+                        0,
+                        STRING,
+                        "node-name",
+                        "Help : Node name"
+                );
+                libcli_register_param(&node , &node_name);
+                {
+                    //arp
+                    static param_t arp;
+                    init_param(&arp,
+                                CMD,
+                                "arp",
+                                show_arp_handler,
+                                0,
+                                INVALID,
+                                0,
+                                "Show ARP table on node"
+                            );
+                    libcli_register_param(&node_name , &arp);
+                } 
+            }
+
+
+
     }
 
     //run commands
@@ -112,7 +193,7 @@ nw_init_cli(){
                         init_param(&ip_address,
                                 LEAF,
                                 0,
-                                arp_handler,
+                                resolve_arp_handler,
                                 validate_ip_address,
                                 STRING,
                                 "ip-address",

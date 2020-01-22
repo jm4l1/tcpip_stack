@@ -1,6 +1,8 @@
 #ifndef __COMMUNICATIONS_H__
 #define __COMMUNICATIONS_H__
 
+#include "layer2/layer2.h"
+
 #define MAX_PACKET_BUFFER_SIZE 2048
 #define LOCALHOST "127.0.0.1"
 

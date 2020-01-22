@@ -12,11 +12,12 @@
 #include <unistd.h>
 
 
+extern void
+layer2_frame_recv(node_t* node , interface_t *intf, char *pkt , uint32_t pkt_size);
+
 static char recv_buffer[MAX_PACKET_BUFFER_SIZE];
 static char send_buffer[MAX_PACKET_BUFFER_SIZE];
-
 static unsigned int udp_port_number = 40000;
-
 static unsigned int
 get_next_udp_port_number(){
     return ++udp_port_number;
@@ -46,7 +47,7 @@ init_udp_socket(node_t* node){
 }
 // function for thread to execute
 static void
-_pkt_receive(node_t* receiving_node,char** pkt_with_aux_data,unsigned int pkt_size  ){
+_pkt_receive(node_t *receiving_node,char *pkt_with_aux_data,unsigned int pkt_size  ){
     
     char* recv_intf_name = pkt_with_aux_data;
     interface_t* recv_intf = get_node_if_by_name(receiving_node , recv_intf_name);
@@ -59,8 +60,11 @@ _pkt_receive(node_t* receiving_node,char** pkt_with_aux_data,unsigned int pkt_si
 }
 int
 pkt_receive( node_t* node , interface_t* intf , char *pkt , unsigned int pkt_size){
+    
     //ingress of packet into tcp ip stack (at DL layer)
-    printf("Info : Pkt Recvd on node %s on IF %s\n" , node->node_name , intf->if_name );
+    printf("Info : Pkt Recvd (%u bytes) on node %s on IF %s\n" , pkt_size , node->node_name , intf->if_name );
+
+    layer2_frame_recv(node , intf , pkt , pkt_size);
 
     return  0;
 
@@ -125,7 +129,6 @@ network_start_pkt_receiver_thread(graph_t* topo){
 
     printf("network receiver thread started for topology \"%s\"\n", topo->topolgy_name);
 }
-
 static int
 _send_pkt_out(int sock_fd , char *pkt_data , unsigned int pkt_size , unsigned int dst_udp_port_no){
     int rc;

@@ -7,7 +7,9 @@
 typedef struct graph_ graph_t;
 typedef struct interface_ interface_t;
 typedef struct node_ node_t;
+typedef struct arp_table_ arp_table_t;
 
+extern void init_arp_table(arp_table_t** arp_table);
 // structure for IP addess in form
 // xxx.xxx.xxx
 typedef struct ip_add_ {
@@ -21,6 +23,9 @@ typedef struct mac_add_{
 }mac_addr_t;
 
 typedef struct node_nw_prop_{
+    //Layer 2 metwork properties
+    arp_table_t *arp_table;
+
     //Layer 3 network properties
     bool_t is_lb_addr_config ;
     ip_add_t lb_addr; /*loopback address of node*/
@@ -30,6 +35,7 @@ static inline void
 init_node_nw_prop(node_nw_prop_t* node_nw_prop){
     node_nw_prop->is_lb_addr_config = FALSE;
     memset(node_nw_prop->lb_addr.ip_addr , 0 , sizeof(node_nw_prop->lb_addr.ip_addr));
+    init_arp_table(&(node_nw_prop->arp_table));
 }
 
 typedef struct intf_nw_props{
