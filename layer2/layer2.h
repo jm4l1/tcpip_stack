@@ -98,7 +98,7 @@ layer2_frame_recv(node_t* node , interface_t *intf, char *pkt , uint32_t pkt_siz
 static inline bool_t
 l2_frame_recv_qualify_on_interface(interface_t* intf , ethernet_frame_t* eth_frame){
     unsigned char* dest_mac = eth_frame->dest_mac.mac;
-    if(!IS_INTF_L3_MODE(intf)) {
+    if(!IS_INTF_L3_MODE(intf) && IF_L2_MODE(intf) == L2_MODE_UNKNOWN) {
         printf("IP address not configured on IF : %s\n" , intf->if_name);
         return FALSE;
     }
@@ -108,6 +108,10 @@ l2_frame_recv_qualify_on_interface(interface_t* intf , ethernet_frame_t* eth_fra
     }
     if(IS_MAC_BROADCAST_ADDR(dest_mac)){
         printf("Broadcast Frame received %x:%x:%x:%x:%x:%x \n"  , eth_frame->src_mac.mac[0], eth_frame->src_mac.mac[1] , eth_frame->src_mac.mac[2] , eth_frame->src_mac.mac[3] , eth_frame->src_mac.mac[4] , eth_frame->src_mac.mac[5]);
+        return TRUE;
+    }
+    if(IF_L2_MODE(intf) != L2_MODE_UNKNOWN){
+        printf("Interface in operating in L2 mode\n");
         return TRUE;
     }
     printf("Dropping out of qualify function %x:%x:%x:%x:%x:%x \n"  , eth_frame->src_mac.mac[0], eth_frame->src_mac.mac[1] , eth_frame->src_mac.mac[2] , eth_frame->src_mac.mac[3] , eth_frame->src_mac.mac[4] , eth_frame->src_mac.mac[5]);

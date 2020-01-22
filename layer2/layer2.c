@@ -3,6 +3,9 @@
 #include <assert.h>
 #include "../communications.h"
 
+
+extern void 
+l2_switch_recv_frame(interface_t *intf, char *pkt , uint32_t pkt_size);
 char* 
 pkt_buffer_shift_right( char* pkt , unsigned int pkt_size , unsigned int total_buffer_size){
     #if 0
@@ -232,33 +235,43 @@ layer2_frame_recv(node_t* node , interface_t *intf, char *pkt , uint32_t pkt_siz
 
     ethernet_frame_t *eth_frame = (ethernet_frame_t *) pkt;
 
+    //Should the node accept Frame
     if(l2_frame_recv_qualify_on_interface(intf , eth_frame ) == FALSE){
-        printf("L2 frame rejected");
+        printf("L2 frame discarded");
         return;
     };
-
-    switch ( eth_frame ->type)
-    {
-    case ARP_PACKET:
+    // Is IIF in L3 mode
+    if(IS_INTF_L3_MODE(intf)){
+        printf("interface %s on node %s in %s mode\n" , intf->if_name , intf->att_node->node_name  , intf_l2_mode_str(intf->intf_nw_props.intf_l2_mode) );
+        switch ( eth_frame ->type)
         {
-            arp_packet_t *arp_packet = ( arp_packet_t*) eth_frame->payload;
-            switch (arp_packet->op_code)
+        case ARP_PACKET:
             {
-            case ARP_REQUEST:
-                process_arp_broadcast_request(node , intf , eth_frame);
-                break;
-            case ARP_REPLY:
-                process_arp_reply_message(node , intf , eth_frame);
-                break;
-            default:
-                break;
-            } 
+                arp_packet_t *arp_packet = ( arp_packet_t*) eth_frame->payload;
+                switch (arp_packet->op_code)
+                {
+                case ARP_REQUEST:
+                    printf("Info - ARP Request received \n");
+                    process_arp_broadcast_request(node , intf , eth_frame);
+                    break;
+                case ARP_REPLY:
+                    printf("Info - ARP Reply received \n");
+                    process_arp_reply_message(node , intf , eth_frame);
+                    break;
+                default:
+                    break;
+                } 
+            }
+            break;
+
+        default:
+            promote_pkt_to_layer3(node , intf , pkt , pkt_size );
+            break;
         }
-        break;
-
-    default:
-        promote_pkt_to_layer3(node , intf , pkt , pkt_size );
-        break;
     }
-
+    // IS IIF in L2 mode
+    else if(IF_L2_MODE(intf) != L2_MODE_UNKNOWN){
+        printf("interface %s on node %s in %s mode\n" , intf->if_name , intf->att_node->node_name  , intf_l2_mode_str(intf->intf_nw_props.intf_l2_mode) );
+        l2_switch_recv_frame(intf, pkt , pkt_size);
+    }
 }

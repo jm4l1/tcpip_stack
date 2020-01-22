@@ -8,6 +8,7 @@ OBJS=gluethread/glthread.o \
 	  communications.o \
 	  topologies.o \
 	  layer2/layer2.o \
+	  layer2/l2switch.o \
 	  net.o \
 	  nwcli.o \
 	  utils.o \
@@ -20,6 +21,8 @@ glthread/glthread.o:gluethread/glthread.c
 	${CC} ${CFLAGS} -c -I layer2 layer2/glthread.c -o layer2/glthread.o
 layer2/layer2.o:layer2/layer2.c
 	${CC} ${CFLAGS} -c -I layer2 layer2/layer2.c -o layer2/layer2.o
+layer2/l2switch.o:layer2/l2switch.c
+	${CC} ${CFLAGS} -c -I layer2 layer2/l2switch.c -o layer2/l2switch.o
 graph.o:graph.c
 	${CC} ${CFLAGS} -c -I . graph.c -o graph.o
 topologies.o:topologies.c
