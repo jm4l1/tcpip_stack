@@ -38,6 +38,7 @@ bool_t node_set_intf_ip_address(node_t* node, char* local_if, char* ip_addr , ch
     if(!intf) return FALSE;
     intf->intf_nw_props.is_ipadd_config = TRUE;
     intf->intf_nw_props.mask = mask;
+    intf->intf_nw_props.intf_l2_mode = L2_MODE_UNKNOWN;
     strcpy(IF_IP(intf),ip_addr);
     return TRUE;
 
@@ -83,7 +84,7 @@ void dump_nw_interface(interface_t* intf){
     if(intf->intf_nw_props.is_ipadd_config){
         apply_mask(IF_IP(intf) , mask , ip_subnet);
     };
-    printf("Interface Name : %s\n" , intf->if_name );
+    printf("Interface Name : %s (%s)\n " , intf->if_name , intf_l2_mode_str(intf->intf_nw_props.intf_l2_mode));
     printf("\tNbr Node %s, Local Node : %s , cost = %d\n" , nbr->node_name , intf->if_name , intf->link->cost );
     printf("\tIP Addr : %s(%s/%d )  MAC : %02x:%02x:%02x:%02x:%02x:%02x \n" , IF_IP(intf), ip_subnet  ,mask ,  IF_MAC(intf)[0] , IF_MAC(intf)[1] , IF_MAC(intf)[2] , IF_MAC(intf)[3] , IF_MAC(intf)[4] , IF_MAC(intf)[5]);
 }
@@ -116,3 +117,19 @@ convert_ip_from_int_to_str(unsigned int ip_addr, char *output_buffer){
     inet_ntop(AF_INET, &ip_addr, output_buffer, INET_ADDRSTRLEN );
 };
 
+void 
+node_set_intf_l2_mode( node_t *node , char *if_name , intf_l2_mode_t intf_l2_mode){
+    interface_t *intf = get_node_if_by_name(node, if_name);
+    // not a valid interface
+    if(!intf) return;
+
+    intf_l2_mode_t curr_l2_mode = intf->intf_nw_props.intf_l2_mode;
+    // interface already configured to desired mode
+    if(curr_l2_mode == intf_l2_mode)    return;
+    //interface configured in L3 mode
+    if(IS_INTF_L3_MODE(intf)){
+        printf("Unable to configure interface %s in %s mode. Interface has IP configured\n" , if_name , intf_l2_mode_str(intf_l2_mode));
+        return;
+    }
+    intf->intf_nw_props.intf_l2_mode = intf_l2_mode;
+}

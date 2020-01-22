@@ -38,9 +38,27 @@ init_node_nw_prop(node_nw_prop_t* node_nw_prop){
     init_arp_table(&(node_nw_prop->arp_table));
 }
 
+typedef enum {
+    ACCESS,
+    TRUNK,
+    L2_MODE_UNKNOWN
+} intf_l2_mode_t;
+
+static inline char *
+intf_l2_mode_str(intf_l2_mode_t intf_l2_mode){
+    switch(intf_l2_mode){
+        case ACCESS :
+            return "access";
+        case TRUNK :
+            return "trunk";
+        default :
+            return "L2_MODE_UNKNOWN";
+    }
+}
 typedef struct intf_nw_props{
     //L2 Properties
     mac_addr_t mac_add;
+    intf_l2_mode_t intf_l2_mode;
     //Layer 3 network properties
     bool_t is_ipadd_config ;
     ip_add_t ip_add; /*loopback address of node*/
@@ -54,6 +72,8 @@ init_intf_nw_prop(intf_nw_props_t* intf_nw_props){
     intf_nw_props->is_ipadd_config = FALSE;
     memset(intf_nw_props->ip_add.ip_addr , 0 , sizeof(intf_nw_props->ip_add.ip_addr));
     intf_nw_props->mask = 0;
+
+    intf_nw_props->intf_l2_mode = ACCESS;
 }
 
 //Macros
@@ -75,5 +95,6 @@ void dump_nw_interface(interface_t* intf);
 unsigned int convert_ip_from_str_to_int(char *ip_addr);
 void convert_ip_from_int_to_str(unsigned int ip_addr, char *output_buffer);
 
+void node_set_intf_l2_mode( node_t *node , char *if_name , intf_l2_mode_t intf_l2_mode);
 
 #endif

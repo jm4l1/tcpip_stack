@@ -13,8 +13,8 @@ int
 main(int argc, char** argv){
 
     nw_init_cli();
-    // topo = build_first_topo();
-    topo = build_linear_topo();
+    topo = build_first_topo();
+    // topo = build_linear_topo();
     start_shell();
 
     //test code
