@@ -11,6 +11,7 @@ OBJS=gluethread/glthread.o \
 	  layer2/l2switch.o \
 	  net.o \
 	  nwcli.o \
+	  pkt_dump.o \
 	  utils.o \
 
 ${TARGET}:testapp.o ${OBJS} ${CLILIBDIR}/libcli.a
@@ -33,6 +34,8 @@ utils.o:utils.c
 	${CC} ${CFLAGS} -c -I . utils.c -o utils.o
 nwcli.o:nwcli.c
 	${CC} ${CFLAGS} -c -I . nwcli.c -o nwcli.o
+pkt_dump.o:pkt_dump.c
+	${CC} ${CFLAGS} -c -I . pkt_dump.c -o pkt_dump.o
 communications.o:communications.c
 	${CC} ${CFLAGS} -c -I . communications.c -o communications.o
 ${CLILIBDIR}/libcli.a:

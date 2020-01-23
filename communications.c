@@ -14,7 +14,8 @@
 
 extern void
 layer2_frame_recv(node_t* node , interface_t *intf, char *pkt , uint32_t pkt_size);
-
+extern void
+pkt_dump( ethernet_frame_t *eth_frame , unsigned int pkt_size);
 static char recv_buffer[MAX_PACKET_BUFFER_SIZE];
 static char send_buffer[MAX_PACKET_BUFFER_SIZE];
 static unsigned int udp_port_number = 40000;
@@ -60,7 +61,7 @@ _pkt_receive(node_t *receiving_node,char *pkt_with_aux_data,unsigned int pkt_siz
 }
 int
 pkt_receive( node_t* node , interface_t* intf , char *pkt , unsigned int pkt_size){
-    
+    pkt_dump( (ethernet_frame_t*) pkt ,  pkt_size);
     //ingress of packet into tcp ip stack (at DL layer)
     if(node->debug_status == DEBUG_ON) printf("Info : Pkt Recvd (%u bytes) on node %s on IF %s\n" , pkt_size , node->node_name , intf->if_name );
 
