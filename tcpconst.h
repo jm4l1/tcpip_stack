@@ -12,4 +12,7 @@
 #define IP_PROTO 0x0800
 
 #define BROADCAST_MAC 0xFFFFFFFFFFFF
+
+#define VLAN_TAG 0x8100
+
 #endif

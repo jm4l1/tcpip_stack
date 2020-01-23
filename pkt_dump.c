@@ -6,6 +6,13 @@ pkt_dump( ethernet_frame_t *eth_frame , unsigned int pkt_size){
     printf("<Ethernet>\n");
     printf("Dest Mac: %02x:%02x:%02x:%02x:%02x:%02x\n" , eth_frame->dest_mac.mac[0] ,eth_frame->dest_mac.mac[1] , eth_frame->dest_mac.mac[2] , eth_frame->dest_mac.mac[3] , eth_frame->dest_mac.mac[4] , eth_frame->dest_mac.mac[5] );
     printf("src Mac: %02x:%02x:%02x:%02x:%02x:%02x\n" , eth_frame->src_mac.mac[0] ,eth_frame->src_mac.mac[1] , eth_frame->src_mac.mac[2] , eth_frame->src_mac.mac[3] , eth_frame->src_mac.mac[4] , eth_frame->src_mac.mac[5] );
+    
+    vlan_tagged_ethernet_frame_t *vlan_eth_frame = is_pkt_vlan_tagged(eth_frame);
+    if(vlan_eth_frame)
+        printf("Vlan Tag : %u\n" , vlan_eth_frame->vlan_8021q_tag.tci_vid);
+    else
+        printf("Vlan Tag : Untagged\n");
+        
     printf("Type : 0x%.4x\n" , eth_frame->type);
 
     if(eth_frame->type == ARP_PACKET){
@@ -17,7 +24,6 @@ pkt_dump( ethernet_frame_t *eth_frame , unsigned int pkt_size){
         convert_ip_from_int_to_str( htonl(arp_packet->dst_ip) , arp_target_ip);
 
         printf("\t<ARP>\n");
-        // | hw_type | proto_type | hw_addr_len | proto_addr_len | op_code |    src_mac    |  src_ip  |    dest_mac  |    dst_ip   |
         printf("\tHW Type: %d\n" , arp_packet->hw_type);
         printf("\tProto Type: 0x%04x\n" , arp_packet->proto_type);
         printf("\tHW ADDR LEN: %d\n" , arp_packet->hw_addr_len);
