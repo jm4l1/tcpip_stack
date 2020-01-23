@@ -2,7 +2,10 @@
 #define __NET_H__
 
 #include <string.h>
+#include <stdint.h>
 #include "utils.h"
+
+#define MAX_VLAN_MEMBERSHIP (uint16_t)10
 
 typedef struct graph_ graph_t;
 typedef struct interface_ interface_t;
@@ -63,6 +66,8 @@ typedef struct intf_nw_props{
     //L2 Properties
     mac_addr_t mac_add;
     intf_l2_mode_t intf_l2_mode;
+    uint16_t vlans[MAX_VLAN_MEMBERSHIP];
+
     //Layer 3 network properties
     bool_t is_ipadd_config ;
     ip_add_t ip_add; /*loopback address of node*/
@@ -101,5 +106,7 @@ unsigned int convert_ip_from_str_to_int(char *ip_addr);
 void convert_ip_from_int_to_str(unsigned int ip_addr, char *output_buffer);
 
 void node_set_intf_l2_mode( node_t *node , char *if_name , intf_l2_mode_t intf_l2_mode);
+void node_set_intf_vlan_membership(node_t *node , char *if_name , uint16_t vlan_id);
+void node_remove_vlan_membership(node_t *node , char *if_name , uint16_t vlan_id);
 
 #endif
