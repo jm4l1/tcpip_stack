@@ -271,3 +271,69 @@ layer2_frame_recv(node_t* node , interface_t *intf, char *pkt , uint32_t pkt_siz
         l2_switch_recv_frame(intf, pkt , pkt_size);
     }
 }
+ethernet_frame_t *
+tag_pkt_with_vlan_id(ethernet_frame_t *eth_frame , uint32_t total_pkt_size , uint16_t vlan_id , uint32_t *new_pkt_size){
+    vlan_tagged_ethernet_frame_t* vlan_eth_frame ;
+    vlan_eth_frame = is_pkt_vlan_tagged(eth_frame);
+
+    char dest_mac[16];
+    char src_mac[16];
+    uint16_t type = eth_frame->type;
+    memcpy(src_mac , eth_frame->src_mac.mac , sizeof(mac_addr_t));
+    memcpy(dest_mac , eth_frame->dest_mac.mac , sizeof(mac_addr_t));
+    uint32_t new_pkt_size_val = total_pkt_size;
+
+    //if frame alread has a tag
+    if(vlan_eth_frame){
+        printf("Info : Frame is tagged with VLAN ID %hu , Updating to %hu\n" , vlan_eth_frame->vlan_8021q_tag.tci_vid  , vlan_id );
+        vlan_eth_frame->vlan_8021q_tag.tci_vid = (uint16_t)vlan_id;
+    }
+    else{
+        printf("Info : Tagging frame with VLAN ID %hu \n" , vlan_id );
+        vlan_eth_frame = (vlan_tagged_ethernet_frame_t *)((char *)eth_frame - 4);
+        vlan_eth_frame->vlan_8021q_tag.tpid = VLAN_TAG;
+        vlan_eth_frame->vlan_8021q_tag.tci_vid = vlan_id;
+        memcpy(vlan_eth_frame->src_mac.mac, src_mac, sizeof(mac_addr_t));
+        memcpy(vlan_eth_frame->dest_mac.mac, dest_mac, sizeof(mac_addr_t));
+        vlan_eth_frame->type = type;
+        
+        new_pkt_size_val = total_pkt_size + sizeof(vlan_8021q_tag_t);
+    }
+    *new_pkt_size = new_pkt_size_val;
+
+    return (ethernet_frame_t *)vlan_eth_frame;
+}
+
+ethernet_frame_t *
+untag_pkt_with_vlan_id(ethernet_frame_t *eth_frame , uint32_t total_pkt_size , uint32_t *new_pkt_size){
+    uint32_t new_pkt_size_val = total_pkt_size;
+    // check if frame is tagged
+    vlan_tagged_ethernet_frame_t *vlan_eth_frame = is_pkt_vlan_tagged(eth_frame);
+
+    if(!vlan_eth_frame){
+        printf(" Info : No Tag found in frame\n");
+        *new_pkt_size = new_pkt_size_val;
+        return eth_frame;
+    }
+     printf(" Info :  Tag found %hu in frame , Removing\n" , vlan_eth_frame->vlan_8021q_tag.tci_vid);
+    //copy src & dest mac from tagged frame
+    char src_mac[16];
+    char dest_mac[16];
+    memcpy(src_mac , vlan_eth_frame->src_mac.mac , sizeof(mac_addr_t));
+    memcpy(dest_mac , vlan_eth_frame->dest_mac.mac , sizeof(mac_addr_t));
+
+    //zeroise src , dest , vlan header
+    memset(vlan_eth_frame->src_mac.mac , 0 , sizeof(mac_addr_t));
+    memset(vlan_eth_frame->dest_mac.mac , 0 , sizeof(mac_addr_t));
+    memset(&vlan_eth_frame->vlan_8021q_tag , 0 , sizeof(vlan_8021q_tag_t));
+
+    //cast memory to untagged ethernet fra,
+    ethernet_frame_t *new_eth_frame = (ethernet_frame_t *)((char *)(vlan_eth_frame) + sizeof(vlan_8021q_tag_t));
+
+    //set src &  dest mac
+    memcpy(new_eth_frame->src_mac.mac , src_mac , sizeof(mac_addr_t));
+    memcpy(new_eth_frame->dest_mac.mac , dest_mac , sizeof(mac_addr_t));
+
+    *new_pkt_size = new_pkt_size_val;
+    return new_eth_frame;
+};

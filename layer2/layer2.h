@@ -224,7 +224,14 @@ l2_frame_recv_qualify_on_interface(interface_t* intf , ethernet_frame_t* eth_fra
     if(intf->att_node->debug_status == DEBUG_ON) printf("Info : %s - Dropping out of qualify function %x:%x:%x:%x:%x:%x \n" , intf->att_node->node_name  , eth_frame->src_mac.mac[0], eth_frame->src_mac.mac[1] , eth_frame->src_mac.mac[2] , eth_frame->src_mac.mac[3] , eth_frame->src_mac.mac[4] , eth_frame->src_mac.mac[5]);
     return FALSE;
 }
+ethernet_frame_t *
+tag_pkt_with_vlan_id(ethernet_frame_t *eth_frame , uint32_t total_pkt_size , uint16_t vlan_id , uint32_t *new_pkt_size);
 
-char* pkt_buffer_shift_right( char* pkt , unsigned int pkt_size , unsigned int total_buffer_size);
+ethernet_frame_t *
+untag_pkt_with_vlan_id(ethernet_frame_t *eth_frame , uint32_t total_pkt_size , uint32_t *new_pkt_size);
+
+
+char *
+pkt_buffer_shift_right( char* pkt , unsigned int pkt_size , unsigned int total_buffer_size);
  
 #endif

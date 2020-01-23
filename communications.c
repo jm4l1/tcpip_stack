@@ -60,8 +60,8 @@ _pkt_receive(node_t *receiving_node,char *pkt_with_aux_data,unsigned int pkt_siz
     pkt_receive(receiving_node , recv_intf , pkt_with_aux_data + IF_NAME_SIZE, pkt_size - IF_NAME_SIZE);
 }
 int
-pkt_receive( node_t* node , interface_t* intf , char *pkt , unsigned int pkt_size){
-    pkt_dump( (ethernet_frame_t*) pkt ,  pkt_size);
+// pkt_receive( node_t* node , interface_t* intf , char *pkt , unsigned int pkt_size){
+//     pkt_dump( (ethernet_frame_t*) pkt ,  pkt_size);
     //ingress of packet into tcp ip stack (at DL layer)
     if(node->debug_status == DEBUG_ON) printf("Info : Pkt Recvd (%u bytes) on node %s on IF %s\n" , pkt_size , node->node_name , intf->if_name );
 
