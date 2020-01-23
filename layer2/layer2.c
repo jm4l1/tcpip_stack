@@ -168,7 +168,7 @@ static void
 send_arp_reply_msg(ethernet_frame_t *eth_frame_in , interface_t *oif){
     arp_packet_t *arp_request = (arp_packet_t*) eth_frame_in->payload;
     ethernet_frame_t *eth_frame_out = calloc(1 ,MAX_PACKET_BUFFER_SIZE);
-    const *if_mac = IF_MAC(oif);
+    char *if_mac = IF_MAC(oif);
 
     memcpy(eth_frame_out->dest_mac.mac , eth_frame_in->src_mac.mac , sizeof(mac_addr_t));
     memcpy(eth_frame_out->src_mac.mac , if_mac , sizeof(mac_addr_t));
@@ -221,7 +221,7 @@ static void
 process_arp_reply_message(node_t *node , interface_t *iif , ethernet_frame_t *eth_frame){
     if(node->debug_status == DEBUG_ON) printf("Info : %s - received arp reply\n" , node->node_name);
 
-    arp_table_update_from_arp_reply(node->node_nw_prop.arp_table , eth_frame->payload , iif);
+    arp_table_update_from_arp_reply(node->node_nw_prop.arp_table , (arp_packet_t*) eth_frame->payload , iif);
 }
 static void
 promote_pkt_to_layer3(node_t *node , interface_t *intf ,char *pkt , uint32_t pkt_size ){

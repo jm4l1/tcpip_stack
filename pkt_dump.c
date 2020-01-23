@@ -34,7 +34,7 @@ pkt_dump( ethernet_frame_t *eth_frame , unsigned int pkt_size){
     }
     else {
         printf("\t<UNKNOWN>\n");
-        printf("\tOffset: %x\n" , ETH_HDR_SIZE_EXCL_PAYLOAD);
-        printf("Pkt Size : %u\n" , pkt_size - ( ETH_HDR_SIZE_EXCL_PAYLOAD + 4 ) );
+        printf("\tOffset: %lx\n" , ETH_HDR_SIZE_EXCL_PAYLOAD);
+        printf("Pkt Size : %lu\n" , pkt_size - ( ETH_HDR_SIZE_EXCL_PAYLOAD + 4 ) );
     };
 }

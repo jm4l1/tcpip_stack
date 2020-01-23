@@ -111,7 +111,7 @@ _network_start_pkt_receiver_thread(void *arg){
                 if(FD_ISSET(node->udp_sock_fd , &active_sock_fd_set)){
                     memset(recv_buffer , 0 , MAX_PACKET_BUFFER_SIZE);
                     bytes_recvd = recvfrom(node->udp_sock_fd, (char *) recv_buffer, MAX_PACKET_BUFFER_SIZE , 0 , (struct sockaddr *)&sender_addr , &addr_len);
-                    _pkt_receive(node , (char **) recv_buffer , bytes_recvd);
+                    _pkt_receive(node , recv_buffer , bytes_recvd);
                 }
 
             }ITERATE_GLTHREAD_END(&topo->node_list , curr)
