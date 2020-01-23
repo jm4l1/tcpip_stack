@@ -21,7 +21,7 @@ void init_mac_table(mac_table_t** mac_table){
     *mac_table = calloc(1 , sizeof(mac_table_t));
     init_glthread(&( (*mac_table)->mac_entries ));
 
-    printf("Info - MAC Address Table Initialized\n");
+    if(FALSE) printf("Info - MAC Address Table Initialized\n");
 }
 void mac_table_dump( mac_table_t* mac_table){
     glthread_t *curr;

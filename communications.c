@@ -43,7 +43,7 @@ init_udp_socket(node_t* node){
         printf("Error : Sockect bind failed for Node %s\n" , node->node_name);
         return;
     }
-    printf("Info : UDP/%u bound to %s\n" , node->udp_port_number , node->node_name);
+    if(FALSE) printf("Info : UDP/%u bound to %s\n" , node->udp_port_number , node->node_name);
     node->udp_sock_fd = udp_sock_fd;
 }
 // function for thread to execute
