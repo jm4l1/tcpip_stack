@@ -42,6 +42,14 @@
 #define IF_NAME_SIZE 16
 #define MAX_INTF_PER_NODE 10
 
+// #define ANSI_COLOR_RED     "\x1b[31m"
+// #define ANSI_COLOR_GREEN   "\x1b[32m"
+// #define ANSI_COLOR_YELLOW  "\x1b[33m"
+// #define ANSI_COLOR_BLUE    "\x1b[34m"
+// #define ANSI_COLOR_MAGENTA "\x1b[35m"
+// #define ANSI_COLOR_CYAN    "\x1b[36m"
+// #define ANSI_COLOR_RESET   "\x1b[0m"
+
 typedef struct link_ link_t;
 typedef struct node_ node_t;
 
@@ -108,7 +116,21 @@ get_node_if_by_name(node_t* node , char* if_name){
     }
     return NULL;
 }
-
+static char* debug_status_str(debug_status_t status){
+    switch(status){
+        case DEBUG_ON :
+            return "on";
+        case DEBUG_OFF :
+            return "off";
+        default :
+            return "unknown";
+    }
+}
+static inline void 
+set_node_debug_status(node_t* node ,debug_status_t status){
+    node->debug_status = status;
+    printf("Info : %s - debug %s\n" , node->node_name , debug_status_str(status));
+}
 static inline node_t*
 get_node_by_node_name(graph_t* topo , char* node_name){
     node_t *node;
@@ -133,7 +155,6 @@ void insert_link_between_two_nodes(node_t* node1 , node_t* node2 ,char* from_if_
 void dump_graph(graph_t* graph);
 void dump_node(node_t* node);
 void dump_interface(interface_t* interface);
-
-
 void delete_graph(graph_t* graph);
+
 #endif
