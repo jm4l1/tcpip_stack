@@ -76,6 +76,16 @@ void dump_nw_node(node_t* node){
     }
     printf("\n");
 }
+void dump_vlan_membership(interface_t *intf){
+    if(IF_L2_MODE(intf) != L2_MODE_UNKNOWN ) {
+        printf("VLAN Membership : [ ");
+        for(uint16_t i = 0 ; i < MAX_VLAN_MEMBERSHIP ; i++){
+            uint16_t vlan = intf->intf_nw_props.vlans[i];
+            if(vlan) printf("%hu ", vlan);
+        }
+        printf("]\n");
+    }
+}
 void dump_nw_interface(interface_t* intf){
     node_t* nbr = get_nbr_node(intf);
     char ip_subnet[16];
@@ -85,14 +95,7 @@ void dump_nw_interface(interface_t* intf){
         apply_mask(IF_IP(intf) , mask , ip_subnet);
     };
     printf("Interface Name : %s (%s)\n " , intf->if_name , intf_l2_mode_str(intf->intf_nw_props.intf_l2_mode));
-    if(IF_L2_MODE(intf) != L2_MODE_UNKNOWN ) {
-        printf("VLAN Membership : [ ");
-        for(uint16_t i = 0 ; i < MAX_VLAN_MEMBERSHIP ; i++){
-            uint16_t vlan = intf->intf_nw_props.vlans[i];
-            if(vlan) printf("%hu ", vlan);
-        }
-        printf("]\n");
-    }
+    dump_vlan_membership(intf);
     printf("\tNbr Node %s, Local Node : %s , cost = %d\n" , nbr->node_name , intf->if_name , intf->link->cost );
     printf("\tIP Addr : %s(%s/%d )  MAC : %02x:%02x:%02x:%02x:%02x:%02x \n" , IF_IP(intf), ip_subnet  ,mask ,  IF_MAC(intf)[0] , IF_MAC(intf)[1] , IF_MAC(intf)[2] , IF_MAC(intf)[3] , IF_MAC(intf)[4] , IF_MAC(intf)[5]);
 }

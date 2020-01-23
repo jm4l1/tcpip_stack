@@ -101,6 +101,7 @@ interface_t* node_get_matching_subnet_interface(node_t* node , char* ip_addr);
 void dump_nw_graph(graph_t* graph);
 void dump_nw_node(node_t* node);
 void dump_nw_interface(interface_t* intf);
+void dump_vlan_membership(interface_t *intf);
 
 unsigned int convert_ip_from_str_to_int(char *ip_addr);
 void convert_ip_from_int_to_str(unsigned int ip_addr, char *output_buffer);

@@ -3,12 +3,6 @@
 extern void
 network_start_pkt_receiver_thread(graph_t* topo);
 
-extern void 
-node_set_intf_l2_mode( node_t *node , char *if_name , intf_l2_mode_t intf_l2_mode);
-extern void
-node_set_intf_vlan_membership(node_t *node , char *if_name , uint16_t vlan_id);
-void
-node_remove_vlan_membership(node_t *node , char *if_name , uint16_t vlan_id);
 graph_t*
 build_first_topo(){
     #if 0
@@ -143,8 +137,6 @@ build_simple_l2_switch_topo(){
     node_set_intf_ip_address(H2 , "eth0" ,"10.1.1.2" , 24);
     node_set_intf_ip_address(H3 , "eth0" ,"10.1.1.3" , 24);
     node_set_intf_ip_address(H4 , "eth0" ,"10.1.1.4" , 24);
-
-
 
     node_set_intf_l2_mode(H1,"eth0",ACCESS);
     node_set_intf_vlan_membership(H1 , "eth0",10);
