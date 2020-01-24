@@ -33,7 +33,7 @@
 #define __GRAPH__
 
 #include "gluethread/glthread.h"
-#include "string.h"
+#include <string.h>
 #include <stdio.h>
 #include "net.h"
 #include <stdlib.h>

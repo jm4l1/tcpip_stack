@@ -43,7 +43,7 @@ init_arp_table(arp_table_t** arp_table){
     layer2_fill_with_broadcast_mac(arp_entry->mac_addr.mac);
     strcpy(arp_entry->oif_name , "local" );
     glthread_add_next(&( (*arp_table)->arp_entries ), &arp_entry->arp_glue);
-    if(FALSE) printf("Info - Arp Table Initialized\n");
+    if(FALSE) printf("[init_arp_table] Info - Arp Table Initialized\n");
 }
 bool_t arp_table_entry_add(arp_table_t *arp_table , arp_entry_t *arp_entry ){
     //look up arp table for IP address

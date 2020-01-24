@@ -14,8 +14,6 @@
 
 extern void
 layer2_frame_recv(node_t* node , interface_t *intf, char *pkt , uint32_t pkt_size);
-extern void
-pkt_dump( ethernet_frame_t *eth_frame , unsigned int pkt_size);
 static char recv_buffer[MAX_PACKET_BUFFER_SIZE];
 static char send_buffer[MAX_PACKET_BUFFER_SIZE];
 static unsigned int udp_port_number = 40000;

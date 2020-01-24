@@ -9,6 +9,7 @@ OBJS=gluethread/glthread.o \
 	  topologies.o \
 	  layer2/layer2.o \
 	  layer2/l2switch.o \
+	  layer3/layer3.o \
 	  net.o \
 	  nwcli.o \
 	  pkt_dump.o \
@@ -22,6 +23,8 @@ glthread/glthread.o:gluethread/glthread.c
 	${CC} ${CFLAGS} -c -I layer2 layer2/glthread.c -o layer2/glthread.o
 layer2/layer2.o:layer2/layer2.c
 	${CC} ${CFLAGS} -c -I layer2 layer2/layer2.c -o layer2/layer2.o
+layer3/layer3.o:layer3/layer3.c
+	${CC} ${CFLAGS} -c -I layer3 layer3/layer3.c -o layer3/layer3.o
 layer2/l2switch.o:layer2/l2switch.c
 	${CC} ${CFLAGS} -c -I layer2 layer2/l2switch.c -o layer2/l2switch.o
 graph.o:graph.c

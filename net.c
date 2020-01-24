@@ -1,9 +1,11 @@
-#include "net.h"
 #include "graph.h"
 #include <string.h>
 #include <stdio.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+
+extern
+void rt_table_add_direct_route(route_table_t *route_table , char *dst , uint8_t mask);
 
 static unsigned int 
 hash_code(void* ptr, unsigned int size){
@@ -31,6 +33,7 @@ void interface_assign_mac_address(interface_t *interface){
 bool_t node_set_loopback_address(node_t* node, char* ip_addr){
     node->node_nw_prop.is_lb_addr_config = TRUE;
     strcpy(node->node_nw_prop.lb_addr.ip_addr , ip_addr);
+    rt_table_add_direct_route(node->node_nw_prop.route_table , ip_addr , (uint8_t )32);
     return TRUE;
 }
 bool_t node_set_intf_ip_address(node_t* node, char* local_if, char* ip_addr , char mask){
@@ -40,6 +43,9 @@ bool_t node_set_intf_ip_address(node_t* node, char* local_if, char* ip_addr , ch
     intf->intf_nw_props.mask = mask;
     intf->intf_nw_props.intf_l2_mode = L2_MODE_UNKNOWN;
     strcpy(IF_IP(intf),ip_addr);
+    char dest[16];
+    apply_mask(ip_addr , mask , dest);
+    rt_table_add_direct_route(node->node_nw_prop.route_table , dest ,(uint8_t ) mask);
     return TRUE;
 
 }

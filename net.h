@@ -12,9 +12,11 @@ typedef struct interface_ interface_t;
 typedef struct node_ node_t;
 typedef struct arp_table_ arp_table_t;
 typedef struct mac_table_ mac_table_t;
+typedef struct route_table_ route_table_t;
 
 extern void init_arp_table(arp_table_t** arp_table);
 extern void init_mac_table(mac_table_t** mac_table);
+extern void init_rt_table(route_table_t **route_table);
 // structure for IP addess in form
 // xxx.xxx.xxx
 typedef struct ip_add_ {
@@ -35,6 +37,7 @@ typedef struct node_nw_prop_{
     //Layer 3 network properties
     bool_t is_lb_addr_config ;
     ip_add_t lb_addr; /*loopback address of node*/
+    route_table_t *route_table;
 } node_nw_prop_t;
 
 static inline void
@@ -43,6 +46,7 @@ init_node_nw_prop(node_nw_prop_t* node_nw_prop){
     memset(node_nw_prop->lb_addr.ip_addr , 0 , sizeof(node_nw_prop->lb_addr.ip_addr));
     init_arp_table(&(node_nw_prop->arp_table));
     init_mac_table(&(node_nw_prop->mac_table));
+    init_rt_table(&(node_nw_prop->route_table));
 }
 
 typedef enum {

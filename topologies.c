@@ -2,7 +2,6 @@
 
 extern void
 network_start_pkt_receiver_thread(graph_t* topo);
-
 graph_t*
 build_first_topo(){
     #if 0
@@ -200,7 +199,7 @@ build_dualswitch_topo(){
     node_set_intf_vlan_membership(SW02 , "eth0/4" , 10);
     node_set_intf_vlan_membership(SW02 , "eth0/5" , 10);
     node_set_intf_vlan_membership(SW02 , "eth0/6" , 10);
-    
+
     node_set_loopback_address(H1 , "1.1.1.1");
     node_set_loopback_address(H2 , "2.2.2.2");
     node_set_loopback_address(H3 , "3.3.3.3");
