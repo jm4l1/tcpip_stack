@@ -225,6 +225,35 @@ process_arp_reply_message(node_t *node , interface_t *iif , ethernet_frame_t *et
 static void
 promote_pkt_to_layer3(node_t *node , interface_t *intf ,char *pkt , uint32_t pkt_size ){
 }
+static void
+promote_pkt_to_layer2(node_t *node , interface_t *intf ,ethernet_frame_t *eth_frame , uint32_t pkt_size ){
+        uint16_t ethertype = eth_frame ->type;
+        switch ( ethertype)
+        {
+            case ARP_PACKET:
+                {
+                    arp_packet_t *arp_packet = ( arp_packet_t*) eth_frame->payload;
+                    switch (arp_packet->op_code)
+                    {
+                    case ARP_REQUEST:
+                        if(node->debug_status == DEBUG_ON) printf("[promote_pkt_to_layer2] Info : %s - ARP Request received \n" , node->node_name);
+                        process_arp_broadcast_request(node , intf , eth_frame);
+                        break;
+                    case ARP_REPLY:
+                        if(node->debug_status == DEBUG_ON) printf("[promote_pkt_to_layer2] Info : %s - ARP Reply received \n", node->node_name);
+                        process_arp_reply_message(node , intf , eth_frame);
+                        break;
+                    default:
+                        break;
+                    } 
+                }
+                break;
+
+            default:
+                promote_pkt_to_layer3(node , intf , (char *)eth_frame , pkt_size );
+                break;
+        }
+}
 void
 layer2_frame_recv(node_t* node , interface_t *intf, char *pkt , uint32_t pkt_size){
 
@@ -237,32 +266,8 @@ layer2_frame_recv(node_t* node , interface_t *intf, char *pkt , uint32_t pkt_siz
     };
     // Is IIF in L3 mode
     if(IS_INTF_L3_MODE(intf)){
-        if(node->debug_status == DEBUG_ON) printf("[layer2_frame_recv] Info : %s - interface %s on node %s in %s mode\n" , node->node_name ,  intf->if_name , intf->att_node->node_name  , intf_l2_mode_str(intf->intf_nw_props.intf_l2_mode) );
-        switch ( eth_frame ->type)
-        {
-        case ARP_PACKET:
-            {
-                arp_packet_t *arp_packet = ( arp_packet_t*) eth_frame->payload;
-                switch (arp_packet->op_code)
-                {
-                case ARP_REQUEST:
-                    if(node->debug_status == DEBUG_ON) printf("[layer2_frame_recv] Info : %s - ARP Request received \n" , node->node_name);
-                    process_arp_broadcast_request(node , intf , eth_frame);
-                    break;
-                case ARP_REPLY:
-                    if(node->debug_status == DEBUG_ON) printf("[layer2_frame_recv] Info : %s - ARP Reply received \n", node->node_name);
-                    process_arp_reply_message(node , intf , eth_frame);
-                    break;
-                default:
-                    break;
-                } 
-            }
-            break;
-
-        default:
-            promote_pkt_to_layer3(node , intf , pkt , pkt_size );
-            break;
-        }
+        if(node->debug_status == DEBUG_ON) printf("[layer2_frame_recv] Info : %s - interface %s on node %s in %s mode , Sending to DL Layer\n" , node->node_name ,  intf->if_name , intf->att_node->node_name  , intf_l2_mode_str(intf->intf_nw_props.intf_l2_mode) );
+        promote_pkt_to_layer2(node , intf , eth_frame , pkt_size);
     }
     // IS IIF in L2 mode
     else if(IF_L2_MODE(intf) != L2_MODE_UNKNOWN){
