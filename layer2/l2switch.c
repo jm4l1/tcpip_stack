@@ -42,7 +42,7 @@ void mac_table_dump( mac_table_t* mac_table){
 
 }
 void
-mac_table_entry_delete(mac_table_t *mac_table , char* mac){
+mac_table_entry_delete(mac_table_t *mac_table , unsigned char* mac){
     glthread_t *curr;
     mac_table_entry_t *mac_table_entry;
 
@@ -55,13 +55,13 @@ mac_table_entry_delete(mac_table_t *mac_table , char* mac){
 
 }
 mac_table_entry_t *
-mac_table_entry_lookup(mac_table_t *mac_table , char* mac){
+mac_table_entry_lookup(mac_table_t *mac_table , unsigned char* mac){
     glthread_t *curr;
     mac_table_entry_t *mac_table_entry;
 
     ITERATE_GLTHREAD_BEGIN(&mac_table->mac_entries , curr){
         mac_table_entry = arp_glue_to_mac_table_entry(curr);
-        if(strcmp(mac_table_entry->mac.mac , mac ) == 0 ) return mac_table_entry;
+        if(memcmp(mac_table_entry->mac.mac , mac , sizeof(mac_addr_t) ) == 0 ) return mac_table_entry;
     }ITERATE_GLTHREAD_END(&mac_table->mac_entries , curr)
 
     return NULL;
@@ -86,11 +86,29 @@ l2_switch_perform_mac_learning(node_t *node, char *src_mac, char *if_name){
     memcpy(new_mac_entry->mac.mac , src_mac , sizeof(mac_addr_t));
     mac_table_entry_add(mac_table , new_mac_entry );
 }
+static bool_t
+l2_switch_send_pkt_out(char *pkt, unsigned int pkt_size,interface_t *oif){
+
+    printf("[l2_switch_send_pkt_out] Info : Frame Dropped by L2 on IF %s\n" , oif->if_name);
+    return FALSE;
+}
+
+int
+send_pkt_flood_l2_intf_only(node_t *node,interface_t *exempted_intf,char *pkt, unsigned int pkt_size){
+    for(int i = 0 ; i < MAX_INTF_PER_NODE ; i++){
+        interface_t *intf = node->intf[i];
+        if(!intf) continue;
+        if(intf == exempted_intf ) continue;
+        if(IF_L2_MODE(intf) == L2_MODE_UNKNOWN ) continue;
+        send_pkt_out(pkt ,  pkt_size , intf);
+    }
+    return 0;
+};
 void
 l2_switch_forward_frame(node_t *node , interface_t *intf , char *pkt , uint32_t pkt_size){
     ethernet_frame_t *eth_frame = ( ethernet_frame_t *)pkt;
     if(IS_MAC_BROADCAST_ADDR(eth_frame->dest_mac.mac)){
-        if(node->debug_status == DEBUG_ON) printf("Info : %s -  Broadcast Frame received .. will flood frame src MAC %x:%x:%x:%x:%x:%x\n" ,  node->node_name, eth_frame->src_mac.mac[0] , eth_frame->src_mac.mac[1], eth_frame->src_mac.mac[2], eth_frame->src_mac.mac[3], eth_frame->src_mac.mac[4], eth_frame->src_mac.mac[5]);
+        if(node->debug_status == DEBUG_ON) printf("[l2_switch_forward_frame] Info : %s -  Broadcast Frame received .. will flood frame src MAC %x:%x:%x:%x:%x:%x\n" ,  node->node_name, eth_frame->src_mac.mac[0] , eth_frame->src_mac.mac[1], eth_frame->src_mac.mac[2], eth_frame->src_mac.mac[3], eth_frame->src_mac.mac[4], eth_frame->src_mac.mac[5]);
         send_pkt_flood_l2_intf_only(node , intf , pkt , pkt_size);
         return;
     }
@@ -98,21 +116,21 @@ l2_switch_forward_frame(node_t *node , interface_t *intf , char *pkt , uint32_t 
     mac_table_t *mac_table = node->node_nw_prop.mac_table;
     mac_table_entry_t *mac_entry = mac_table_entry_lookup(mac_table , dest_mac);
     if(!mac_entry){
-        if(node->debug_status == DEBUG_ON) printf("Info : %s - mac not found in table .. will flood frame\n" , node->node_name);
+        if(node->debug_status == DEBUG_ON) printf("[l2_switch_forward_frame] Info : %s - mac not found in table .. will flood frame\n" , node->node_name);
         send_pkt_flood_l2_intf_only(node , intf , pkt , pkt_size);
         return;
     }
 
-    if(node->debug_status == DEBUG_ON) printf("Info : %s - mac not %x:%x:%x:%x:%x:%x found  .. will forward frame to IF %s\n" , node->node_name , mac_entry->mac.mac[0] , mac_entry->mac.mac[1] , mac_entry->mac.mac[2], mac_entry->mac.mac[3], mac_entry->mac.mac[4], mac_entry->mac.mac[5] ,intf->if_name );
-    send_pkt_out(pkt , pkt_size , intf);
+    if(node->debug_status == DEBUG_ON) printf("[l2_switch_forward_frame] Info : %s - mac not %x:%x:%x:%x:%x:%x found  .. will forward frame to IF %s\n" , node->node_name , mac_entry->mac.mac[0] , mac_entry->mac.mac[1] , mac_entry->mac.mac[2], mac_entry->mac.mac[3], mac_entry->mac.mac[4], mac_entry->mac.mac[5] ,intf->if_name );
+    if(l2_switch_send_pkt_out(pkt , pkt_size , intf) == TRUE) send_pkt_out(pkt , pkt_size , intf);
+    return;
 }
 void 
 l2_switch_recv_frame(interface_t *intf, char *pkt , uint32_t pkt_size){
     ethernet_frame_t *eth_frame = ( ethernet_frame_t *)pkt;
     node_t *node = intf->att_node;
-    if(node->debug_status == DEBUG_ON) printf("Info Frame received on node %s IIF %s with src MAC %x:%x:%x:%x:%x:%x\n" , node->node_name , intf->if_name , eth_frame->src_mac.mac[0] , eth_frame->src_mac.mac[1], eth_frame->src_mac.mac[2], eth_frame->src_mac.mac[3], eth_frame->src_mac.mac[4], eth_frame->src_mac.mac[5]);
+    if(node->debug_status == DEBUG_ON) printf("[l2_switch_recv_frame ] Info : Frame received on node %s IIF %s with src MAC %x:%x:%x:%x:%x:%x\n" , node->node_name , intf->if_name , eth_frame->src_mac.mac[0] , eth_frame->src_mac.mac[1], eth_frame->src_mac.mac[2], eth_frame->src_mac.mac[3], eth_frame->src_mac.mac[4], eth_frame->src_mac.mac[5]);
 
     l2_switch_perform_mac_learning(node , eth_frame->src_mac.mac , intf->if_name);
     l2_switch_forward_frame(node , intf , (char *) pkt , pkt_size);
 }
-

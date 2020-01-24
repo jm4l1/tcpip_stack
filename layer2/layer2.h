@@ -203,25 +203,63 @@ void
 layer2_frame_recv(node_t* node , interface_t *intf, char *pkt , uint32_t pkt_size);
 
 static inline bool_t
-l2_frame_recv_qualify_on_interface(interface_t* intf , ethernet_frame_t* eth_frame){
+l2_frame_recv_qualify_on_interface(interface_t* intf , ethernet_frame_t* eth_frame , uint16_t *output_vlan_id){
     unsigned char* dest_mac = eth_frame->dest_mac.mac;
+    vlan_tagged_ethernet_frame_t *vlan_eth_frame = is_pkt_vlan_tagged(eth_frame);
+    uint16_t vlan_id;
+    if(vlan_eth_frame){
+         vlan_id = vlan_eth_frame->vlan_8021q_tag.tci_vid;
+         printf("[l2_frame_recv_qualify_on_interface]Vlan ID %hu found in frame\n" , vlan_id);
+    }
+    //Unknown node
     if(!IS_INTF_L3_MODE(intf) && IF_L2_MODE(intf) == L2_MODE_UNKNOWN) {
-        if(intf->att_node->debug_status == DEBUG_ON) printf("Info : %s - IP address not configured on IF : %s\n" , intf->att_node->node_name , intf->if_name);
+        if(intf->att_node->debug_status == DEBUG_ON) printf("[l2_frame_recv_qualify_on_interface]Alert : %s - Interface : %s is in unknown mode\n" , intf->att_node->node_name , intf->if_name);
         return FALSE;
     }
+    // L3 mode
+    if(IS_INTF_L3_MODE(intf)){
+        //Frame is vlan tagged
+        if(vlan_eth_frame){
+            if(intf->att_node->debug_status == DEBUG_ON) printf("[l2_frame_recv_qualify_on_interface] Info : %s - Interface %s is in L3 mode cannot accept vlan tagged Frames\n" , intf->att_node->node_name , intf->if_name);
+            return FALSE;
+        }
+    }
+    //L2 mode
+    if(IF_L2_MODE(intf) == ACCESS){
+        //VLAN ID of frame does not match VLAN of Interface
+        if(vlan_eth_frame && !get_access_intf_operating_vlan_id(intf)) {
+            printf("[l2_frame_recv_qualify_on_interface] Info : %s - Interface %s is not a member of VLAN %hu\n" , intf->att_node->node_name , intf->if_name, vlan_id);
+            return FALSE;
+        }
+        printf("[l2_frame_recv_qualify_on_interface] Info : %s - Interface %s is operating in Access mode, accetping tagged frame with vlan id %hu\n" , intf->att_node->node_name , intf->if_name , vlan_id);
+        *output_vlan_id = vlan_id;
+        return TRUE;
+    }
+    if(IF_L2_MODE(intf) == TRUNK){
+        //Frame is not Tagged
+        if(!vlan_eth_frame) {
+            printf("[l2_frame_recv_qualify_on_interface] Info : %s - Interface %s is operating in Trunk mode, can not accept untagged frames\n" , intf->att_node->node_name , intf->if_name);
+            return FALSE;
+        }
+        //Interface is member of VLAN
+        if(is_trunk_interface_vlan_member(intf , vlan_id)){
+            printf("[l2_frame_recv_qualify_on_interface] Info : %s - Interface %s is operating in Trunk mode, accetping tagged frame with vlan id %hu\n" , intf->att_node->node_name , intf->if_name , vlan_id);
+            return TRUE;
+        }
+        printf("[l2_frame_recv_qualify_on_interface] Info : %s - Interface %s is not a member of VLAN %hu\n , Dropping Frame" , intf->att_node->node_name , intf->if_name, vlan_id);
+        return FALSE;
+    }
+    //Accept Unicast Frames 
     if(memcmp(IF_MAC(intf) ,dest_mac , sizeof((mac_addr_t*)0)->mac) == 0){
-        if(intf->att_node->debug_status == DEBUG_ON) printf("Info : %s - Frame with MAC of %s\n" , intf->att_node->node_name , intf->if_name);
+        if(intf->att_node->debug_status == DEBUG_ON) printf("[l2_frame_recv_qualify_on_interface] Info : %s - Frame with MAC of %s\n" , intf->att_node->node_name , intf->if_name);
         return TRUE;
     }
+    //Accept Broadcast Frames
     if(IS_MAC_BROADCAST_ADDR(dest_mac)){
-        if(intf->att_node->debug_status == DEBUG_ON) printf("Info : %s - Broadcast Frame received %x:%x:%x:%x:%x:%x \n" , intf->att_node->node_name  , eth_frame->src_mac.mac[0], eth_frame->src_mac.mac[1] , eth_frame->src_mac.mac[2] , eth_frame->src_mac.mac[3] , eth_frame->src_mac.mac[4] , eth_frame->src_mac.mac[5]);
+        if(intf->att_node->debug_status == DEBUG_ON) printf("[l2_frame_recv_qualify_on_interface] Info : %s - Broadcast Frame received %x:%x:%x:%x:%x:%x \n" , intf->att_node->node_name  , eth_frame->src_mac.mac[0], eth_frame->src_mac.mac[1] , eth_frame->src_mac.mac[2] , eth_frame->src_mac.mac[3] , eth_frame->src_mac.mac[4] , eth_frame->src_mac.mac[5]);
         return TRUE;
     }
-    if(IF_L2_MODE(intf) != L2_MODE_UNKNOWN){
-        if(intf->att_node->debug_status == DEBUG_ON) printf("Info : %s - Interface in operating in L2 mode\n" , intf->att_node->node_name);
-        return TRUE;
-    }
-    if(intf->att_node->debug_status == DEBUG_ON) printf("Info : %s - Dropping out of qualify function %x:%x:%x:%x:%x:%x \n" , intf->att_node->node_name  , eth_frame->src_mac.mac[0], eth_frame->src_mac.mac[1] , eth_frame->src_mac.mac[2] , eth_frame->src_mac.mac[3] , eth_frame->src_mac.mac[4] , eth_frame->src_mac.mac[5]);
+    if(intf->att_node->debug_status == DEBUG_ON) printf("[l2_frame_recv_qualify_on_interface] Info : %s - Dropping Frame with src mac %x:%x:%x:%x:%x:%x \n" , intf->att_node->node_name  , eth_frame->src_mac.mac[0], eth_frame->src_mac.mac[1] , eth_frame->src_mac.mac[2] , eth_frame->src_mac.mac[3] , eth_frame->src_mac.mac[4] , eth_frame->src_mac.mac[5]);
     return FALSE;
 }
 ethernet_frame_t *

@@ -122,11 +122,11 @@ void send_arp_broadcast_rquest(node_t *node , interface_t *oif , char *ip_addr){
         // mactch output interface based on ip_addr subnet
         oif = node_get_matching_subnet_interface(node , ip_addr);
         if(!oif){
-            if(node->debug_status == DEBUG_ON) printf("Info : node %s , No eligble interface found for IP %s\n" , node->node_name , ip_addr);
+            if(node->debug_status == DEBUG_ON) printf("[send_arp_broadcast_rquest] Info : node %s , No eligble interface found for IP %s\n" , node->node_name , ip_addr);
             return;
         } 
         if(strcmp(ip_addr , IF_IP(oif)) == 0){
-            if(node->debug_status == DEBUG_ON) printf("Error : node %s , Attempting to send Arp for local IP %s on interface OIF : %s \n" , node->node_name , ip_addr, oif->if_name);
+            if(node->debug_status == DEBUG_ON) printf("[send_arp_broadcast_rquest] Error : node %s , Attempting to send Arp for local IP %s on interface OIF : %s \n" , node->node_name , ip_addr, oif->if_name);
             return;
         }
     }
@@ -159,7 +159,7 @@ void send_arp_broadcast_rquest(node_t *node , interface_t *oif , char *ip_addr){
     uint32_t* eth_fcs = ETH_FCS(eth_frame , ARP_PACKET_SIZE);
     *eth_fcs = 0;
 
-    if (node->debug_status == DEBUG_ON) printf("Info : sending Arp Broadcast from node %s on to IP %s on OIF: %s\n" , node->node_name , ip_addr , oif->if_name);
+    if (node->debug_status == DEBUG_ON) printf("[send_arp_broadcast_rquest] Info : sending Arp Broadcast from node %s on to IP %s on OIF: %s\n" , node->node_name , ip_addr , oif->if_name);
     send_pkt_out( (char *)eth_frame ,eth_frame_size ,oif );
 
     free(eth_frame);
@@ -195,7 +195,7 @@ send_arp_reply_msg(ethernet_frame_t *eth_frame_in , interface_t *oif){
 
     char *shifted_pkt_buffer = pkt_buffer_shift_right((char*) eth_frame_out , total_pkt_size , MAX_PACKET_BUFFER_SIZE);
 
-    if( oif->att_node->debug_status == DEBUG_ON) printf("Info : %s - Sending Arp Reply\n",  oif->att_node->node_name);
+    if( oif->att_node->debug_status == DEBUG_ON) printf("[send_arp_reply_msg] Info : %s - Sending Arp Reply\n",  oif->att_node->node_name);
 
     send_pkt_out(shifted_pkt_buffer , total_pkt_size , oif );
 
@@ -204,7 +204,7 @@ send_arp_reply_msg(ethernet_frame_t *eth_frame_in , interface_t *oif){
 };
 static void 
 process_arp_broadcast_request(node_t *node , interface_t *iif , ethernet_frame_t *eth_frame){
-    if(node->debug_status == DEBUG_ON) printf("Info : Incoming ARP msg Revcd on IF %s of Node %s\n" , iif->if_name , node->node_name);
+    if(node->debug_status == DEBUG_ON) printf("[process_arp_broadcast_request] Info : Incoming ARP msg Revcd on IF %s of Node %s\n" , iif->if_name , node->node_name);
     arp_packet_t* arp_packet = (arp_packet_t*) eth_frame->payload;
     char target_ip[16];
     uint32_t target_ip_l = htonl(arp_packet->dst_ip);
@@ -212,14 +212,14 @@ process_arp_broadcast_request(node_t *node , interface_t *iif , ethernet_frame_t
 
     char* local_if_ip = IF_IP(iif);
     if( strcmp(local_if_ip , target_ip) != 0){
-        if(node->debug_status == DEBUG_ON) printf("Info :  Discarding ARP msg Recvd on IF %s of Node %s for IP %s\n" , iif->if_name , node->node_name , target_ip);
+        if(node->debug_status == DEBUG_ON) printf("[process_arp_broadcast_request] Info :  Discarding ARP msg Recvd on IF %s of Node %s for IP %s\n" , iif->if_name , node->node_name , target_ip);
         return;
     }
     send_arp_reply_msg(eth_frame , iif);
 }
 static void
 process_arp_reply_message(node_t *node , interface_t *iif , ethernet_frame_t *eth_frame){
-    if(node->debug_status == DEBUG_ON) printf("Info : %s - received arp reply\n" , node->node_name);
+    if(node->debug_status == DEBUG_ON) printf("[process_arp_reply_message] Info : %s - received arp reply\n" , node->node_name);
 
     arp_table_update_from_arp_reply(node->node_nw_prop.arp_table , (arp_packet_t*) eth_frame->payload , iif);
 }
@@ -230,15 +230,15 @@ void
 layer2_frame_recv(node_t* node , interface_t *intf, char *pkt , uint32_t pkt_size){
 
     ethernet_frame_t *eth_frame = (ethernet_frame_t *) pkt;
-
+    uint16_t vlan_to_tag ;
     //Should the node accept Frame
-    if(l2_frame_recv_qualify_on_interface(intf , eth_frame ) == FALSE){
-        if(node->debug_status == DEBUG_ON) printf("Info : %s - L2 frame discarded\n", node->node_name);
+    if(l2_frame_recv_qualify_on_interface(intf , eth_frame, &vlan_to_tag ) == FALSE){
+        if(node->debug_status == DEBUG_ON) printf("[layer2_frame_recv] Info : %s - L2 frame discarded\n", node->node_name);
         return;
     };
     // Is IIF in L3 mode
     if(IS_INTF_L3_MODE(intf)){
-        if(node->debug_status == DEBUG_ON) printf("Info : %s - interface %s on node %s in %s mode\n" , node->node_name ,  intf->if_name , intf->att_node->node_name  , intf_l2_mode_str(intf->intf_nw_props.intf_l2_mode) );
+        if(node->debug_status == DEBUG_ON) printf("[layer2_frame_recv] Info : %s - interface %s on node %s in %s mode\n" , node->node_name ,  intf->if_name , intf->att_node->node_name  , intf_l2_mode_str(intf->intf_nw_props.intf_l2_mode) );
         switch ( eth_frame ->type)
         {
         case ARP_PACKET:
@@ -247,11 +247,11 @@ layer2_frame_recv(node_t* node , interface_t *intf, char *pkt , uint32_t pkt_siz
                 switch (arp_packet->op_code)
                 {
                 case ARP_REQUEST:
-                    if(node->debug_status == DEBUG_ON) printf("Info : %s - ARP Request received \n" , node->node_name);
+                    if(node->debug_status == DEBUG_ON) printf("[layer2_frame_recv] Info : %s - ARP Request received \n" , node->node_name);
                     process_arp_broadcast_request(node , intf , eth_frame);
                     break;
                 case ARP_REPLY:
-                    if(node->debug_status == DEBUG_ON) printf("Info : %s - ARP Reply received \n", node->node_name);
+                    if(node->debug_status == DEBUG_ON) printf("[layer2_frame_recv] Info : %s - ARP Reply received \n", node->node_name);
                     process_arp_reply_message(node , intf , eth_frame);
                     break;
                 default:
@@ -268,7 +268,11 @@ layer2_frame_recv(node_t* node , interface_t *intf, char *pkt , uint32_t pkt_siz
     // IS IIF in L2 mode
     else if(IF_L2_MODE(intf) != L2_MODE_UNKNOWN){
         if(node->debug_status == DEBUG_ON) printf("Info : %s - interface %s on node %s in %s mode\n" ,node->node_name , intf->if_name , intf->att_node->node_name  , intf_l2_mode_str(intf->intf_nw_props.intf_l2_mode) );
-        l2_switch_recv_frame(intf, pkt , pkt_size);
+        uint32_t new_pkt_size = 0;
+        if(vlan_to_tag){
+            pkt = (char *)tag_pkt_with_vlan_id((ethernet_frame_t *)pkt ,pkt_size , vlan_to_tag , &new_pkt_size);
+        }
+        l2_switch_recv_frame(intf, pkt , vlan_to_tag ? new_pkt_size : pkt_size );
     }
 }
 ethernet_frame_t *

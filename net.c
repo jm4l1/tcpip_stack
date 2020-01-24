@@ -224,3 +224,23 @@ node_remove_vlan_membership(node_t *node , char *if_name , uint16_t vlan_id){
     printf("Error : Node : %s - Unable to remove VLAN Membership on Interface %s , VLAN %hu is not a member of interface\n" , node->node_name , if_name , vlan_id);
     return;
 }
+uint16_t
+get_access_intf_operating_vlan_id(interface_t *intf){
+    if(IF_L2_MODE(intf) != ACCESS) {
+        printf("Error : Unable to get access Vlan , Interface %s is not in access mode \n" , intf->if_name);
+        return 0;
+    }
+    return intf->intf_nw_props.vlans[0];
+}
+bool_t
+is_trunk_interface_vlan_member(interface_t *intf,uint16_t vlan_id){
+    if(IF_L2_MODE(intf) != TRUNK) {
+        printf("Error :  Interface %s is not in trunk mode \n" , intf->if_name);
+        return 0;
+    }
+    for( uint16_t i = 0 ; i < MAX_VLAN_MEMBERSHIP ; i ++){
+        if(vlan_id == intf->intf_nw_props.vlans[i]) 
+        return TRUE;
+    }
+    return FALSE;
+};

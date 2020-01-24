@@ -52,18 +52,18 @@ _pkt_receive(node_t *receiving_node,char *pkt_with_aux_data,unsigned int pkt_siz
     
     char* recv_intf_name = pkt_with_aux_data;
     interface_t* recv_intf = get_node_if_by_name(receiving_node , recv_intf_name);
-    if(receiving_node->debug_status == DEBUG_ON) printf("Info : Incoming packet node %s on interface %s\n" , receiving_node->node_name , recv_intf->if_name);
+    if(receiving_node->debug_status == DEBUG_ON) printf("[_pkt_receive] Info : Incoming packet node %s on interface %s\n" , receiving_node->node_name , recv_intf->if_name);
     if(!recv_intf){
-        if(receiving_node->debug_status == DEBUG_ON) printf("Error : Pkt recvd on unknown interface %s on node %s\n", recv_intf->if_name , receiving_node-> node_name);
+        if(receiving_node->debug_status == DEBUG_ON) printf("[_pkt_receive] Error : Pkt recvd on unknown interface %s on node %s\n", recv_intf->if_name , receiving_node-> node_name);
         return;
     }
     pkt_receive(receiving_node , recv_intf , pkt_with_aux_data + IF_NAME_SIZE, pkt_size - IF_NAME_SIZE);
 }
 int
 pkt_receive( node_t* node , interface_t* intf , char *pkt , unsigned int pkt_size){
-    pkt_dump( (ethernet_frame_t*) pkt ,  pkt_size);
+    // pkt_dump( (ethernet_frame_t*) pkt ,  pkt_size);
     // ingress of packet into tcp ip stack (at DL layer)
-    if(node->debug_status == DEBUG_ON) printf("Info : Pkt Recvd (%u bytes) on node %s on IF %s\n" , pkt_size , node->node_name , intf->if_name );
+    if(node->debug_status == DEBUG_ON) printf("[pkt_receive] Info : Pkt Recvd (%u bytes) on node %s on IF %s\n" , pkt_size , node->node_name , intf->if_name );
 
     layer2_frame_recv(node , intf , pkt , pkt_size);
 
@@ -154,7 +154,7 @@ send_pkt_out(char* pkt , unsigned int pkt_size , interface_t *intf){
     unsigned int dst_udp_port_no = nbr_node->udp_port_number;
     int sock = socket(AF_INET , SOCK_DGRAM , IPPROTO_UDP);
     if(sock < 0 ){
-        printf("Error : Sending socker created failed , errno = %d" , errno);
+        printf("[send_pkt_out] Error : Sending socker created failed , errno = %d" , errno);
     }
     
     interface_t* remote_intf  = &intf->link->intf1 == intf ? &intf->link->intf2 : &intf->link->intf1;
@@ -165,7 +165,7 @@ send_pkt_out(char* pkt , unsigned int pkt_size , interface_t *intf){
     memcpy(pkt_wth_aux_data + IF_NAME_SIZE , pkt , pkt_size);
 
     rc = _send_pkt_out(sock ,pkt_wth_aux_data , pkt_size + IF_NAME_SIZE ,dst_udp_port_no);
-     if(sending_node->debug_status == DEBUG_ON) printf("Info : Pkt Sent from node %s on IF  %s\n" , sending_node->node_name , intf->if_name );
+     if(sending_node->debug_status == DEBUG_ON) printf("[send_pkt_out] Info : Pkt Sent from node %s on IF  %s\n" , sending_node->node_name , intf->if_name );
 
     close(sock);
     return rc;
@@ -181,14 +181,3 @@ send_pkt_flood(node_t *node, interface_t *exempted_intf,char *pkt, unsigned int 
     }
     return 0;
 }
-int
-send_pkt_flood_l2_intf_only(node_t *node,interface_t *exempted_intf,char *pkt, unsigned int pkt_size){
-    for(int i = 0 ; i < MAX_INTF_PER_NODE ; i++){
-        interface_t *intf = node->intf[i];
-        if(!intf) continue;
-        if(intf == exempted_intf ) continue;
-        if(IF_L2_MODE(intf) == L2_MODE_UNKNOWN ) continue;
-        send_pkt_out(pkt ,  pkt_size , intf);
-    }
-    return 0;
-};

@@ -109,5 +109,6 @@ void convert_ip_from_int_to_str(unsigned int ip_addr, char *output_buffer);
 void node_set_intf_l2_mode( node_t *node , char *if_name , intf_l2_mode_t intf_l2_mode);
 void node_set_intf_vlan_membership(node_t *node , char *if_name , uint16_t vlan_id);
 void node_remove_vlan_membership(node_t *node , char *if_name , uint16_t vlan_id);
-
+uint16_t get_access_intf_operating_vlan_id(interface_t *intf);
+bool_t is_trunk_interface_vlan_member(interface_t *intf,uint16_t vlan_id);
 #endif
