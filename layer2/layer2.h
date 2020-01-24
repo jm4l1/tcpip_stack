@@ -227,12 +227,13 @@ l2_frame_recv_qualify_on_interface(interface_t* intf , ethernet_frame_t* eth_fra
     //L2 mode
     if(IF_L2_MODE(intf) == ACCESS){
         //VLAN ID of frame does not match VLAN of Interface
-        if(vlan_eth_frame && !get_access_intf_operating_vlan_id(intf)) {
+        uint16_t if_acces_vlan = get_access_intf_operating_vlan_id(intf);
+        if(vlan_eth_frame && (vlan_id != if_acces_vlan)) {
             printf("[l2_frame_recv_qualify_on_interface] Info : %s - Interface %s is not a member of VLAN %hu\n" , intf->att_node->node_name , intf->if_name, vlan_id);
             return FALSE;
         }
-        printf("[l2_frame_recv_qualify_on_interface] Info : %s - Interface %s is operating in Access mode, accetping tagged frame with vlan id %hu\n" , intf->att_node->node_name , intf->if_name , vlan_id);
-        *output_vlan_id = vlan_id;
+        printf("[l2_frame_recv_qualify_on_interface] Info : %s - Interface %s is operating in Access mode, accept and tag frame with vlan id %hu\n" , intf->att_node->node_name , intf->if_name , if_acces_vlan);
+        *output_vlan_id = if_acces_vlan;
         return TRUE;
     }
     if(IF_L2_MODE(intf) == TRUNK){
@@ -243,7 +244,7 @@ l2_frame_recv_qualify_on_interface(interface_t* intf , ethernet_frame_t* eth_fra
         }
         //Interface is member of VLAN
         if(is_trunk_interface_vlan_member(intf , vlan_id)){
-            printf("[l2_frame_recv_qualify_on_interface] Info : %s - Interface %s is operating in Trunk mode, accetping tagged frame with vlan id %hu\n" , intf->att_node->node_name , intf->if_name , vlan_id);
+            printf("[l2_frame_recv_qualify_on_interface] Info : %s - Interface %s is operating in Trunk mode, accept tagged frame with vlan id %hu\n" , intf->att_node->node_name , intf->if_name , vlan_id);
             return TRUE;
         }
         printf("[l2_frame_recv_qualify_on_interface] Info : %s - Interface %s is not a member of VLAN %hu\n , Dropping Frame" , intf->att_node->node_name , intf->if_name, vlan_id);

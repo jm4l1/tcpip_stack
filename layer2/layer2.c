@@ -200,7 +200,6 @@ send_arp_reply_msg(ethernet_frame_t *eth_frame_in , interface_t *oif){
     send_pkt_out(shifted_pkt_buffer , total_pkt_size , oif );
 
     free(eth_frame_out);
-        // printf("Info :  Sending ARP reply for msg Recvd on IF %s of Node %s for IP %s\n" , iif->if_name , node->node_name , target_ip);
 };
 static void 
 process_arp_broadcast_request(node_t *node , interface_t *iif , ethernet_frame_t *eth_frame){
@@ -267,7 +266,7 @@ layer2_frame_recv(node_t* node , interface_t *intf, char *pkt , uint32_t pkt_siz
     }
     // IS IIF in L2 mode
     else if(IF_L2_MODE(intf) != L2_MODE_UNKNOWN){
-        if(node->debug_status == DEBUG_ON) printf("Info : %s - interface %s on node %s in %s mode\n" ,node->node_name , intf->if_name , intf->att_node->node_name  , intf_l2_mode_str(intf->intf_nw_props.intf_l2_mode) );
+        if(node->debug_status == DEBUG_ON) printf("[layer2_frame_recv] Info : %s - interface %s on node %s in %s mode\n" ,node->node_name , intf->if_name , intf->att_node->node_name  , intf_l2_mode_str(intf->intf_nw_props.intf_l2_mode) );
         uint32_t new_pkt_size = 0;
         if(vlan_to_tag){
             pkt = (char *)tag_pkt_with_vlan_id((ethernet_frame_t *)pkt ,pkt_size , vlan_to_tag , &new_pkt_size);
@@ -289,11 +288,11 @@ tag_pkt_with_vlan_id(ethernet_frame_t *eth_frame , uint32_t total_pkt_size , uin
 
     //if frame alread has a tag
     if(vlan_eth_frame){
-        printf("Info : Frame is tagged with VLAN ID %hu , Updating to %hu\n" , vlan_eth_frame->vlan_8021q_tag.tci_vid  , vlan_id );
+        printf("[tag_pkt_with_vlan_id] Info : Frame is tagged with VLAN ID %hu , Updating to %hu\n" , vlan_eth_frame->vlan_8021q_tag.tci_vid  , vlan_id );
         vlan_eth_frame->vlan_8021q_tag.tci_vid = (uint16_t)vlan_id;
     }
     else{
-        printf("Info : Tagging frame with VLAN ID %hu \n" , vlan_id );
+        printf("[tag_pkt_with_vlan_id] Info : Tagging frame with VLAN ID %hu \n" , vlan_id );
         vlan_eth_frame = (vlan_tagged_ethernet_frame_t *)((char *)eth_frame - 4);
         vlan_eth_frame->vlan_8021q_tag.tpid = VLAN_TAG;
         vlan_eth_frame->vlan_8021q_tag.tci_vid = vlan_id;
@@ -315,11 +314,11 @@ untag_pkt_with_vlan_id(ethernet_frame_t *eth_frame , uint32_t total_pkt_size , u
     vlan_tagged_ethernet_frame_t *vlan_eth_frame = is_pkt_vlan_tagged(eth_frame);
 
     if(!vlan_eth_frame){
-        printf(" Info : No Tag found in frame\n");
+        printf("[untag_pkt_with_vlan_id] Info : No Tag found in frame\n");
         *new_pkt_size = new_pkt_size_val;
         return eth_frame;
     }
-     printf(" Info :  Tag found %hu in frame , Removing\n" , vlan_eth_frame->vlan_8021q_tag.tci_vid);
+     printf("[untag_pkt_with_vlan_id] Info :  Tag found %hu in frame , Removing\n" , vlan_eth_frame->vlan_8021q_tag.tci_vid);
     //copy src & dest mac from tagged frame
     char src_mac[16];
     char dest_mac[16];

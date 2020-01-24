@@ -194,6 +194,13 @@ build_dualswitch_topo(){
     insert_link_between_two_nodes(SW02 , H5 , "eth0/5" , "eth0" , 1);
     insert_link_between_two_nodes(SW02 , H6 , "eth0/6" , "eth0" , 1);
 
+    node_set_intf_vlan_membership(SW01 , "eth0/1" , 10);
+    node_set_intf_vlan_membership(SW01 , "eth0/3" , 10);
+    node_set_intf_vlan_membership(SW01 , "eth0/2" , 10);
+    node_set_intf_vlan_membership(SW02 , "eth0/4" , 10);
+    node_set_intf_vlan_membership(SW02 , "eth0/5" , 10);
+    node_set_intf_vlan_membership(SW02 , "eth0/6" , 10);
+    
     node_set_loopback_address(H1 , "1.1.1.1");
     node_set_loopback_address(H2 , "2.2.2.2");
     node_set_loopback_address(H3 , "3.3.3.3");

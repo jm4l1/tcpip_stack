@@ -132,7 +132,7 @@ node_set_intf_l2_mode( node_t *node , char *if_name , intf_l2_mode_t intf_l2_mod
     interface_t *intf = get_node_if_by_name(node, if_name);
     // not a valid interface
     if(!intf) {
-        printf("Error : , Node : %s - Unable to set L2 mode. %s not valid IF name\n" , node->node_name , if_name);
+        printf("[node_set_intf_l2_mode] Error : , Node : %s - Unable to set L2 mode. %s not valid IF name\n" , node->node_name , if_name);
         return;
     }
 
@@ -141,12 +141,12 @@ node_set_intf_l2_mode( node_t *node , char *if_name , intf_l2_mode_t intf_l2_mod
     if(curr_l2_mode == intf_l2_mode)    return;
     //interface configured in L3 mode
     if(IS_INTF_L3_MODE(intf)){
-        printf("Unable to configure interface %s in %s mode. Interface has IP configured\n" , if_name , intf_l2_mode_str(intf_l2_mode));
+        printf("[node_set_intf_l2_mode] Unable to configure interface %s in %s mode. Interface has IP configured\n" , if_name , intf_l2_mode_str(intf_l2_mode));
         return;
     }
     //interface configured in Trunk mode and setting to Access
     if(IF_L2_MODE(intf) == TRUNK && intf_l2_mode == ACCESS){
-        printf("Info : Changing Interface from trunk to acces mode , removing vlan members\n");
+        printf("[node_set_intf_l2_mode] Info : Setting Interface from trunk to acces mode , removing vlan members\n");
         memset( (uint16_t *)(intf->intf_nw_props.vlans) + 1  , 0 , sizeof(uint16_t)*(MAX_VLAN_MEMBERSHIP - 1) );
     }
     IF_L2_MODE(intf) = intf_l2_mode;
@@ -157,7 +157,7 @@ add_vlan_to_trunk_membership(interface_t *intf, uint16_t vlan_id){
     int32_t empty_slot = -1;
     for(; slot < MAX_VLAN_MEMBERSHIP ;slot++){
         if(vlan_id == intf->intf_nw_props.vlans[slot]) {
-            printf("Info : Node %s - Interface %s is already a member of VLAN %hu\n" , intf->att_node->node_name , intf->if_name , vlan_id);
+            printf("[add_vlan_to_trunk_membership] Info : Node %s - Interface %s is already a member of VLAN %hu\n" , intf->att_node->node_name , intf->if_name , vlan_id);
             return;
         }else{
             if(!intf->intf_nw_props.vlans[slot] && empty_slot == -1){
@@ -166,25 +166,25 @@ add_vlan_to_trunk_membership(interface_t *intf, uint16_t vlan_id){
         }
     }
     if(empty_slot != -1 ){
-        printf("Info : Node %s - Adding VLAN %hu to Interface %s \n" , intf->if_name , vlan_id, intf->att_node->node_name );
+        printf("[add_vlan_to_trunk_membership] Info : Node %s - Adding VLAN %hu to Interface %s \n" , intf->if_name , vlan_id, intf->att_node->node_name );
         intf->intf_nw_props.vlans[empty_slot] = vlan_id;
         return;
     }
-    printf("Error : Node %s - Unable to set VLAN on IF %s , Max VLAN membership  %hu reached \n", intf->att_node->node_name , intf->if_name , MAX_VLAN_MEMBERSHIP);
+    printf("[add_vlan_to_trunk_membership] Error : Node %s - Unable to set VLAN on IF %s , Max VLAN membership  %hu reached \n", intf->att_node->node_name , intf->if_name , MAX_VLAN_MEMBERSHIP);
 
 }
 void
 interface_set_vlan(node_t *node , interface_t *intf , uint16_t vlan_id){
     if(IS_INTF_L3_MODE(intf)){
-        printf("Error : Node %s - Unable to set VLAN on IF %s , Interface in  L3 mode\n" , node->node_name , intf->if_name);
+        printf("[interface_set_vlan] Error : Node %s - Unable to set VLAN on IF %s , Interface in  L3 mode\n" , node->node_name , intf->if_name);
         return;
     }
     if(IF_L2_MODE(intf) == L2_MODE_UNKNOWN){
-        printf("Error : Node %s - Unable to set VLAN on IF %s , Interface in unknown L2 mode\n", node->node_name , intf->if_name);
+        printf("[interface_set_vlan] Error : Node %s - Unable to set VLAN on IF %s , Interface in unknown L2 mode\n", node->node_name , intf->if_name);
         return;
     }
     if(IF_L2_MODE(intf) == ACCESS){
-        printf("Info - Setting Interface vlan to %hu\n" , vlan_id);
+        printf("[interface_set_vlan] Info - Setting Interface vlan to %hu\n" , vlan_id);
         intf->intf_nw_props.vlans[0] = vlan_id;
         return;
     }
@@ -196,7 +196,7 @@ void
 node_set_intf_vlan_membership(node_t *node , char *if_name , uint16_t vlan_id){
     interface_t *intf = get_node_if_by_name(node,if_name);
     if(!intf)  {
-        printf("Error : Node : %s - Unable to set VLAN Membership on Interface. %s not valid IF name\n" , node->node_name , if_name);
+        printf("[node_set_intf_vlan_membership] Error : Node : %s - Unable to set VLAN Membership on Interface. %s not valid IF name\n" , node->node_name , if_name);
         return;
     }
     interface_set_vlan(node , intf , vlan_id);
@@ -205,29 +205,29 @@ void
 node_remove_vlan_membership(node_t *node , char *if_name , uint16_t vlan_id){
     interface_t *intf = get_node_if_by_name(node,if_name);
     if(!intf)  {
-        printf("Error : Node : %s - Unable to remove VLAN Membership on Interface. %s not valid IF name\n" , node->node_name , if_name);
+        printf("[node_remove_vlan_membership] Error : Node : %s - Unable to remove VLAN Membership on Interface. %s not valid IF name\n" , node->node_name , if_name);
         return;
     }
     if(IF_L2_MODE(intf) == L2_MODE_UNKNOWN){
-        printf("Error : Node : %s - Unable to remove VLAN Membership on Interface %s , Unknown L2 Mode\n" , node->node_name , if_name);
+        printf("[node_remove_vlan_membership] Error : Node : %s - Unable to remove VLAN Membership on Interface %s , Unknown L2 Mode\n" , node->node_name , if_name);
         return;
     }
     uint16_t slot = 0;
     for( ; slot < MAX_VLAN_MEMBERSHIP ; slot++){
         uint16_t vlan = intf->intf_nw_props.vlans[slot];
         if( vlan == vlan_id ) {
-            printf("Info : Node :%s - Removing VLAN %hu from IF %s membership\n" , node->node_name , vlan_id , if_name);
+            printf("[node_remove_vlan_membership] Info : Node :%s - Removing VLAN %hu from IF %s membership\n" , node->node_name , vlan_id , if_name);
             memset( (uint16_t *)(intf->intf_nw_props.vlans) + slot ,  0 , sizeof(uint16_t));
             return;
         }
     }
-    printf("Error : Node : %s - Unable to remove VLAN Membership on Interface %s , VLAN %hu is not a member of interface\n" , node->node_name , if_name , vlan_id);
+    printf("[node_remove_vlan_membership] Error : Node : %s - Unable to remove VLAN Membership on Interface %s , VLAN %hu is not a member of interface\n" , node->node_name , if_name , vlan_id);
     return;
 }
 uint16_t
 get_access_intf_operating_vlan_id(interface_t *intf){
     if(IF_L2_MODE(intf) != ACCESS) {
-        printf("Error : Unable to get access Vlan , Interface %s is not in access mode \n" , intf->if_name);
+        printf("[get_access_intf_operating_vlan_id] Error : Unable to get access Vlan , Interface %s is not in access mode \n" , intf->if_name);
         return 0;
     }
     return intf->intf_nw_props.vlans[0];
@@ -235,7 +235,7 @@ get_access_intf_operating_vlan_id(interface_t *intf){
 bool_t
 is_trunk_interface_vlan_member(interface_t *intf,uint16_t vlan_id){
     if(IF_L2_MODE(intf) != TRUNK) {
-        printf("Error :  Interface %s is not in trunk mode \n" , intf->if_name);
+        printf("[is_trunk_interface_vlan_member] Error :  Interface %s is not in trunk mode \n" , intf->if_name);
         return 0;
     }
     for( uint16_t i = 0 ; i < MAX_VLAN_MEMBERSHIP ; i ++){

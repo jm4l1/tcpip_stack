@@ -5,7 +5,7 @@
 #include "../communications.h"
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <assert.h>
 
 typedef struct mac_table_{
     glthread_t mac_entries;
@@ -79,7 +79,7 @@ mac_table_entry_add(mac_table_t *mac_table , mac_table_entry_t *mac_table_entry)
 void
 l2_switch_perform_mac_learning(node_t *node, char *src_mac, char *if_name){
     // - lookup mac in mac table
-    if(node->debug_status == DEBUG_ON) printf("Info : %s : Performing MAC learning\n" , node->node_name);
+    if(node->debug_status == DEBUG_ON) printf("[l2_switch_perform_mac_learning] Info : %s : Performing MAC learning\n" , node->node_name);
     mac_table_t *mac_table = node->node_nw_prop.mac_table;
     mac_table_entry_t *new_mac_entry = calloc(1 , sizeof(mac_table_entry_t));
     strcpy(new_mac_entry->oif_name , if_name);
@@ -88,19 +88,48 @@ l2_switch_perform_mac_learning(node_t *node, char *src_mac, char *if_name){
 }
 static bool_t
 l2_switch_send_pkt_out(char *pkt, unsigned int pkt_size,interface_t *oif){
-
-    printf("[l2_switch_send_pkt_out] Info : Frame Dropped by L2 on IF %s\n" , oif->if_name);
+    if(IS_INTF_L3_MODE(oif)){
+        if(oif->att_node->debug_status == DEBUG_ON) printf("[l2_switch_send_pkt_out] Fatal - L3 Interface selected to Perform L2 Forwarding\n");
+        assert(0);
+    }
+    ethernet_frame_t *eth_frame = (ethernet_frame_t *) pkt;
+    vlan_tagged_ethernet_frame_t *vlan_eth_frame = is_pkt_vlan_tagged(eth_frame);
+    uint16_t vlan_id = NULL;
+    if(vlan_eth_frame){
+        vlan_id = vlan_eth_frame->vlan_8021q_tag.tci_vid;
+    }
+    if(IF_L2_MODE(oif) == TRUNK){
+        if(!is_trunk_interface_vlan_member(oif,vlan_id)){
+            if(oif->att_node->debug_status == DEBUG_ON) printf("[l2_switch_send_pkt_out] Error - Node %s , Trunk IF %s is not a memeber of VLAN %hu \n" , oif->att_node->node_name , oif->if_name , vlan_id);
+            return FALSE;
+        }
+        if(oif->att_node->debug_status == DEBUG_ON) printf("[l2_switch_send_pkt_out] Info - Node %s , IF %s is a memeber of VLAN %hu , Pakcet Forwarded on IF\n" , oif->att_node->node_name , oif->if_name , vlan_id);
+        send_pkt_out(pkt , pkt_size , oif);
+        return TRUE;
+    }
+    if(IF_L2_MODE(oif) == ACCESS){
+        if(get_access_intf_operating_vlan_id(oif) != vlan_id){
+            if(oif->att_node->debug_status == DEBUG_ON) printf("[l2_switch_send_pkt_out] Error - Node %s , Access IF %s is not a memeber of VLAN %hu\n" , oif->att_node->node_name , oif->if_name , vlan_id);
+            return FALSE;
+        }
+        if(oif->att_node->debug_status == DEBUG_ON) printf("[l2_switch_send_pkt_out] Info - Node %s , IF %s is a member of VLAN %hu , Will Untag Pakcet and Forwarded on IF\n" , oif->att_node->node_name , oif->if_name , vlan_id);
+        uint32_t new_pkt_size = 0;
+        eth_frame = untag_pkt_with_vlan_id((ethernet_frame_t *)pkt , pkt_size , &new_pkt_size );
+        send_pkt_out( (char *)eth_frame , new_pkt_size , oif);
+        return TRUE;
+    }
+    if(oif->att_node->debug_status == DEBUG_ON) printf("[l2_switch_send_pkt_out] Info : Frame Dropped by L2 on IF %s\n" , oif->if_name);
     return FALSE;
 }
 
-int
-send_pkt_flood_l2_intf_only(node_t *node,interface_t *exempted_intf,char *pkt, unsigned int pkt_size){
+static int
+l2_switch_flood_pkt_out(node_t *node,interface_t *exempted_intf,char *pkt, unsigned int pkt_size){
     for(int i = 0 ; i < MAX_INTF_PER_NODE ; i++){
         interface_t *intf = node->intf[i];
         if(!intf) continue;
         if(intf == exempted_intf ) continue;
         if(IF_L2_MODE(intf) == L2_MODE_UNKNOWN ) continue;
-        send_pkt_out(pkt ,  pkt_size , intf);
+        l2_switch_send_pkt_out(pkt ,  pkt_size , intf);
     }
     return 0;
 };
@@ -109,7 +138,7 @@ l2_switch_forward_frame(node_t *node , interface_t *intf , char *pkt , uint32_t 
     ethernet_frame_t *eth_frame = ( ethernet_frame_t *)pkt;
     if(IS_MAC_BROADCAST_ADDR(eth_frame->dest_mac.mac)){
         if(node->debug_status == DEBUG_ON) printf("[l2_switch_forward_frame] Info : %s -  Broadcast Frame received .. will flood frame src MAC %x:%x:%x:%x:%x:%x\n" ,  node->node_name, eth_frame->src_mac.mac[0] , eth_frame->src_mac.mac[1], eth_frame->src_mac.mac[2], eth_frame->src_mac.mac[3], eth_frame->src_mac.mac[4], eth_frame->src_mac.mac[5]);
-        send_pkt_flood_l2_intf_only(node , intf , pkt , pkt_size);
+        l2_switch_flood_pkt_out(node , intf , pkt , pkt_size);
         return;
     }
     char *dest_mac = (char* ) eth_frame->dest_mac.mac;
@@ -117,12 +146,12 @@ l2_switch_forward_frame(node_t *node , interface_t *intf , char *pkt , uint32_t 
     mac_table_entry_t *mac_entry = mac_table_entry_lookup(mac_table , dest_mac);
     if(!mac_entry){
         if(node->debug_status == DEBUG_ON) printf("[l2_switch_forward_frame] Info : %s - mac not found in table .. will flood frame\n" , node->node_name);
-        send_pkt_flood_l2_intf_only(node , intf , pkt , pkt_size);
+        l2_switch_flood_pkt_out(node , intf , pkt , pkt_size);
         return;
     }
 
-    if(node->debug_status == DEBUG_ON) printf("[l2_switch_forward_frame] Info : %s - mac not %x:%x:%x:%x:%x:%x found  .. will forward frame to IF %s\n" , node->node_name , mac_entry->mac.mac[0] , mac_entry->mac.mac[1] , mac_entry->mac.mac[2], mac_entry->mac.mac[3], mac_entry->mac.mac[4], mac_entry->mac.mac[5] ,intf->if_name );
-    if(l2_switch_send_pkt_out(pkt , pkt_size , intf) == TRUE) send_pkt_out(pkt , pkt_size , intf);
+    if(node->debug_status == DEBUG_ON) printf("[l2_switch_forward_frame] Info : %s - mac not %x:%x:%x:%x:%x:%x found  .. will forward frame to IF %s\n" , node->node_name , mac_entry->mac.mac[0] , mac_entry->mac.mac[1] , mac_entry->mac.mac[2], mac_entry->mac.mac[3], mac_entry->mac.mac[4], mac_entry->mac.mac[5] ,mac_entry->oif_name );
+    l2_switch_send_pkt_out(pkt , pkt_size ,  get_node_if_by_name(node , mac_entry->oif_name) );
     return;
 }
 void 
