@@ -5,7 +5,8 @@
 extern graph_t * build_first_topo();
 extern graph_t * build_linear_topo();
 extern graph_t * build_simple_l2_switch_topo();
-extern graph_t* build_dualswitch_topo();
+extern graph_t * build_dualswitch_topo();
+extern graph_t * build_simple_l3_topo();
 extern void nw_init_cli();
 extern int send_pkt_out(char* pkt , unsigned int pkt_size , interface_t *intf);
 extern int send_pkt_flood(node_t *node, interface_t *exempted_intf,char *pkt, unsigned int pkt_size);
@@ -16,9 +17,10 @@ main(int argc, char** argv){
 
     nw_init_cli();
     // topo = build_first_topo();
-    topo = build_linear_topo();
+    // topo = build_linear_topo();
     // topo = build_simple_l2_switch_topo();
     // topo = build_dualswitch_topo();
+    topo = build_simple_l3_topo();
     start_shell();
 
     //test code

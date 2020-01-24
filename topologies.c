@@ -55,7 +55,6 @@ build_first_topo(){
 
     return topo;
 }
-
 graph_t*
 build_linear_topo(){
     #if 0
@@ -89,7 +88,6 @@ build_linear_topo(){
 
     return topo;
 }
-
 graph_t*
 build_simple_l2_switch_topo(){
     #if 0
@@ -213,6 +211,50 @@ build_dualswitch_topo(){
     node_set_intf_ip_address(H4, "eth0" , "10.1.1.4" , 24);
     node_set_intf_ip_address(H5, "eth0" , "10.1.1.5" , 24);
     node_set_intf_ip_address(H6, "eth0" , "10.1.1.6" , 24);
+
+    network_start_pkt_receiver_thread(topo);
+    return topo;
+}
+
+graph_t*
+build_simple_l3_topo(){
+    #if 0
+
+                                                          .-''-.                                                
+                                           40.1.1.1/24   /      \  20.1.1.1/24                                             
+                                +-----------------------|   R1   |-----------------------+                                             
+                                |                 ge0/2  \      / ge0/3                  |                      
+                                |                         `-..-'                         |                     
+                   40.1.1.2/24  |ge0/1                 Lo : 1.1.1.1                ge0/1 |  20.1.1.3/24                                                                    
+                             .-''-.                                                    .-''-.                                                                   
+                            /      \ ge0/3                                     ge0/2  /      \                                                                  
+                           |   R2   |------------------------------------------------|   R3   |                                                                 
+                            \      / 30.1.1..2/24                        30.1.1.3/24  \      /                                                                  
+                             `-..-'                                                    `-..-'       
+                        Lo : 2.2.2.2                                                 Lo : 3.3.3.3              
+    #endif
+    graph_t *topo = create_new_graph("Simple Layer 3 Topology");
+
+    node_t *R1 = create_graph_node(topo , "R1");
+    node_t *R2 = create_graph_node(topo , "R2");
+    node_t *R3 = create_graph_node(topo , "R3");
+
+    node_set_loopback_address(R1 , "1.1.1.1");
+    node_set_loopback_address(R2 , "2.2.2.2");
+    node_set_loopback_address(R3 , "3.3.3.3");
+
+    insert_link_between_two_nodes(R1 , R2 , "ge0/2" , "ge0/1" , 1);
+    insert_link_between_two_nodes(R1 , R3 , "ge0/3" , "ge0/1" , 1);
+    insert_link_between_two_nodes(R2 , R3 , "ge0/3" , "ge0/2" , 1);
+
+    node_set_intf_ip_address(R1,"ge0/2","40.1.1.1", 24);
+    node_set_intf_ip_address(R1,"ge0/3","20.1.1.1", 24);
+
+    node_set_intf_ip_address(R2,"ge0/1","40.1.1.2", 24);
+    node_set_intf_ip_address(R2,"ge0/3","30.1.1.2", 24);
+
+    node_set_intf_ip_address(R3,"ge0/1","20.1.1.3", 24);
+    node_set_intf_ip_address(R3,"ge0/2","30.1.1.3", 24);
 
     network_start_pkt_receiver_thread(topo);
     return topo;

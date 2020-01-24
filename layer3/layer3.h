@@ -24,7 +24,7 @@ GLTHREAD_TO_STRUCT(route_glue_to_l3_route , layer3_route_t , l3route_glue);
 
 void init_rt_table(route_table_t **route_table);
 void rt_table_add_direct_route(route_table_t *route_table , char *dst , uint8_t mask);
-void dump_route_table(route_table_t *route_table);
+void rt_dump_table(route_table_t *route_table);
 void rt_table_add_route(route_table_t *route_table , char *dst , uint8_t mask , char *gw_ip , char *oif_name);
 layer3_route_t * l3rib_lookup_lpm(route_table_t route_table , uint32_t dest);
 

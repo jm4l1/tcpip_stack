@@ -33,7 +33,7 @@ void interface_assign_mac_address(interface_t *interface){
 bool_t node_set_loopback_address(node_t* node, char* ip_addr){
     node->node_nw_prop.is_lb_addr_config = TRUE;
     strcpy(node->node_nw_prop.lb_addr.ip_addr , ip_addr);
-    rt_table_add_direct_route(node->node_nw_prop.route_table , ip_addr , (uint8_t )32);
+    // rt_table_add_direct_route(node->node_nw_prop.route_table , ip_addr , (uint8_t )32);
     return TRUE;
 }
 bool_t node_set_intf_ip_address(node_t* node, char* local_if, char* ip_addr , char mask){
@@ -100,7 +100,7 @@ void dump_nw_interface(interface_t* intf){
     if(intf->intf_nw_props.is_ipadd_config){
         apply_mask(IF_IP(intf) , mask , ip_subnet);
     };
-    printf("Interface Name : %s (%s)\n " , intf->if_name , intf_l2_mode_str(intf->intf_nw_props.intf_l2_mode));
+    printf("Interface Name : %s (%s)\n " , intf->if_name , ( IS_INTF_L3_MODE(intf) ? "IP Routed" : intf_l2_mode_str(intf->intf_nw_props.intf_l2_mode)));
     dump_vlan_membership(intf);
     printf("\tNbr Node %s, Local Node : %s , cost = %d\n" , nbr->node_name , intf->if_name , intf->link->cost );
     printf("\tIP Addr : %s(%s/%d )  MAC : %02x:%02x:%02x:%02x:%02x:%02x \n" , IF_IP(intf), ip_subnet  ,mask ,  IF_MAC(intf)[0] , IF_MAC(intf)[1] , IF_MAC(intf)[2] , IF_MAC(intf)[3] , IF_MAC(intf)[4] , IF_MAC(intf)[5]);

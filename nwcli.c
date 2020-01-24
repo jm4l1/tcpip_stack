@@ -195,6 +195,29 @@ show_vlans_handler(
 
 }
 static int
+show_route_handler(
+    param_t* param,                 //parameter passed to handler call back
+    ser_buff_t * tlv_buff,          // tlv structure described param
+    op_mode enable_or_disable       // is command enable or disable function
+){
+    tlv_struct_t *tlv = NULL;
+    char *node_name = NULL;
+    node_t* node;
+    TLV_LOOP_BEGIN(tlv_buff , tlv){
+        if(strcmp(tlv->leaf_id  , "node-name") == 0)
+            node_name = tlv->value ;
+    }TLV_LOOP_END;
+    node = get_node_by_node_name(topo , node_name);
+    if(!node) {
+        printf("Node %s, not found in topology\n", node_name);
+        return -1;
+    }
+
+    rt_dump_table(node->node_nw_prop.route_table);
+    return 0;
+
+}
+static int
 show_debug_status_handler(
     param_t* param,                 //parameter passed to handler call back
     ser_buff_t * tlv_buff,          // tlv structure described param
@@ -288,7 +311,6 @@ mode_set_handler(
     return 0;
 
 }
-
 static int 
 add_vlan_handler(
     param_t* param,                 //parameter passed to handler call back
@@ -560,6 +582,21 @@ nw_init_cli(){
                 }
             
             }
+            //route
+            {
+                static param_t route;
+                init_param(&route,
+                            CMD,
+                            "route",
+                            show_route_handler,
+                            0,
+                            INVALID,
+                            0,
+                            "Show Route table on node"
+                        );
+                libcli_register_param(&node_name , &route);
+                set_param_cmd_code(&route , CMDCODE_SHOW_NODE_ROUTE_TABLE);
+            } 
         }
     }
 

@@ -15,7 +15,7 @@ void rt_table_add_direct_route(route_table_t *route_table , char *dst , uint8_t 
     init_glthread(&direct_route->l3route_glue);
     glthread_add_next(&route_table->route_entries , &direct_route->l3route_glue);
 };
-void dump_route_table(route_table_t *route_table){
+void rt_dump_table(route_table_t *route_table){
     glthread_t *curr;
     layer3_route_t *l3route;
     ITERATE_GLTHREAD_BEGIN(&route_table->route_entries , curr){
