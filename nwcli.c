@@ -5,6 +5,85 @@
 #include "graph.h"
 #include <stdio.h>
 
+#define NUM_SAVED_TOPOS 5
+char* saved_topologies[NUM_SAVED_TOPOS] = { 
+"0 - Simple Host Topolgy \n\n\
+                               +----------+ \n \
+                           0/4 |          |0/0 \n \
+        +----------------------+   R0_re  +---------------------+ \n \
+        |           40.1.1.1/24| 122.1.1.0|20.1.1.1/24          | \n \
+        |                      +----------+                     | \n \
+        |                                                       | \n \
+        |                                                       | \n \
+        |                                                       | \n \
+        |40.1.1.2/24                                            |20.1.1.2/24 \n \
+        |0/5                                                    |0/1 \n \
+    +---+---+                                              +----+-----+ \n \
+    |       |0/3                                        0/2|          | \n \
+    | R2_re +----------------------------------------------+    R1_re | \n \
+    |       |30.1.1.2/24                        30.1.1.1/24|          | \n \
+    +-------+                                              +----------+  \n\n ",
+"1 - Linear \n\n\
+    +-----------+                        +-----------+                         +-----------+           \n \
+    |           |0/1                  0/2|           |0/3                   0/4|           |           \n \
+    +   R0_re   +------------------------+   R1_re   +-------------------------+   R2_re   +           \n \
+    |           |10.1.1.1/24  10.1.1.2/24|           |20.1.1.2/24   20.1.1.1/24|           |           \n \
+    +-----------+                        +-----------+                         +-----------+           \n\n " ,
+"2 - Simple Layer 2 Topology \n\n\
+                                        +--------+ \n \
+                                        |   H4   | \n \
+                                        +--------+ \n \
+                                            | eth0/0 \n \
+                                            | 10.1.1.3/24 \n \
+                                            | \n \
+                                            | eth0/4 \n \
+                                      +-----------+                                    \n \
+    +--------+ 10.1.1.1/24            |           |              10.1.1.3/24 +--------+ \n \
+    |   H1   |------------------------+    SW01   +--------------------------|   H3   | \n \
+    +--------+ eth0/0           eth0/1|           | eth0/3            eth0/0 +--------+ \n \
+                                      +-----------+                                    \n \
+                                            | eth0/2 \n \
+                                            | \n \
+                                            |10.1.1.2/24 \n \
+                                            | eth0/0 \n \
+                                       +--------+ \n \
+                                       |   H2   | \n \
+                                       +--------+ \n\n " ,
+"3 - Dual Switch Technology \n\n\
+                                        +--------+                                              +--------+\n \
+                                        |   H3   |                                              |   H4   |\n \
+                                        +--------+                                              +--------+\n \
+                                            | eth0/0                                                | eth0/0\n \
+                                            | 10.1.1.3/24                                           | 10.1.1.4/24\n \
+                                            |                                                       |\n \
+                                            | eth0/3  , VID10                                       | eth0/4  , VID 10\n \
+                                      +-----------+                                           +----------+\n \
+    +--------+ 10.1.1.1/24       VID10|           | TR VID 10 , 11             TR VID 10 , 11 |          |              10.1.1.6/24 +--------+\n \
+    |   H1   |------------------------+    SW01   +===========================================+   SW02   +--------------------------|   H6   |\n \
+    +--------+ eth0/0           eth0/1|           | ge0/1                                ge0/1|          | eth0/6 , VID 11   eth0/0 +--------+\n \
+                                      +-----------+                                           +----------+\n \
+                                            | eth0/2 , VID11                                        | eth0/5  , VID11\n \
+                                            |                                                       |\n \
+                                            |10.1.1.2/24                                            |10.1.1.5/24\n \
+                                            | eth0/0                                                | eth0/0\n \
+                                       +--------+                                              +--------+\n \
+                                       |   H2   |                                              |   H5   |\n \
+                                       +--------+                                              +--------+\n\n",
+"4 - Simple Layer 3 Topology \n\n\
+                                          .-''-.                                         \n \
+                           40.1.1.1/24  /       \\  20.1.1.1/24                           \n \
+                +----------------------|   R1    |-----------------------+               \n \
+                |                 ge0/2\\       / ge0/3                  |               \n \
+                |                         `-..-'                         |               \n \
+   40.1.1.2/24  |ge0/1                 Lo : 1.1.1.1                ge0/1 |  20.1.1.3/24  \n \
+             .-''-.                                                    .-''-.            \n \
+            /      \\ ge0/3                                     ge0/2  /      \\           \n \
+           |   R2   |------------------------------------------------|   R3   |          \n \
+           \\        / 30.1.1..2/24                       30.1.1.3/24 \\      /           \n \
+             `-..-'                                                    `-..-'            \n \
+        Lo : 2.2.2.2                                                 Lo : 3.3.3.3        \n\n"
+};
+
 extern graph_t *topo;
 
 extern void send_arp_broadcast_rquest(node_t *node , interface_t *oif , char *ip_addr);
@@ -13,6 +92,12 @@ extern void mac_table_dump( mac_table_t* mac_table);
 extern void set_node_debug_status(node_t* node ,debug_status_t status);
 extern void rt_dump_table(route_table_t *route_table);
 extern void rt_table_add_route(route_table_t *route_table , char *dst , uint8_t mask , char *gw_ip , char *oif_name);
+
+extern graph_t * build_first_topo();
+extern graph_t * build_linear_topo();
+extern graph_t * build_simple_l2_switch_topo();
+extern graph_t * build_dualswitch_topo();
+extern graph_t * build_simple_l3_topo();
 
 static int 
 show_nw_topology_handler (
@@ -23,9 +108,42 @@ show_nw_topology_handler (
     int CMDCODE = -1;
     CMDCODE = EXTRACT_CMD_CODE(tlv_buff);
 
+    if(!topo){
+        printf("No Topology loaded / created\n");
+        return -1;
+    }
+
     switch(CMDCODE){
         case CMDCODE_SHOW_NW_TOPOLOGY:
             dump_nw_graph(topo);
+            break;
+        default:
+            ;
+    }
+    return 0;
+}
+static int
+show_saved_topologies_handler(
+    param_t* param,                 //parameter passed to handler call back
+    ser_buff_t * tlv_buff,          // tlv structure described param
+    op_mode enable_or_disable       // is command enable or disable function
+){
+    tlv_struct_t *tlv = NULL;
+    int CMDCODE = -1;
+    int topology_id;
+    CMDCODE = EXTRACT_CMD_CODE(tlv_buff);
+
+    switch(CMDCODE){
+        case CMDCODE_SHOW_TOPOLOGIES_SAVED:
+            for(int i = 0 ; i <  NUM_SAVED_TOPOS ; i++)
+                printf("%s",saved_topologies[i]);
+            break;
+        case CMDCODE_SHOW_TOPOLOGY_ID:
+            TLV_LOOP_BEGIN(tlv_buff , tlv){
+                if(strcmp(tlv->leaf_id  , "topology-id") == 0)
+                    topology_id = atoi(tlv->value);
+                printf("%s",saved_topologies[topology_id]);
+            }TLV_LOOP_END;
             break;
         default:
             ;
@@ -38,6 +156,10 @@ show_node_handler (
     ser_buff_t * tlv_buff,          // tlv structure described param
     op_mode enable_or_disable       // is command enable or disable function
 ){
+    if(!topo){
+        printf("No Topology loaded / created\n");
+        return -1;
+    }
     tlv_struct_t *tlv = NULL;
     char *node_name = NULL;
     node_t* node;
@@ -61,6 +183,10 @@ show_node_interfaces(
     ser_buff_t * tlv_buff,          // tlv structure described param
     op_mode enable_or_disable       // is command enable or disable function
 ){
+    if(!topo){
+        printf("No Topology loaded / created\n");
+        return -1;
+    }
     tlv_struct_t *tlv = NULL;
     char *node_name = NULL;
     node_t* node;
@@ -87,6 +213,12 @@ show_arp_handler(
     ser_buff_t * tlv_buff,          // tlv structure described param
     op_mode enable_or_disable       // is command enable or disable function
 ){
+
+    if(!topo){
+        printf("No Topology loaded / created\n");
+        return -1;
+    }
+
     tlv_struct_t *tlv = NULL;
     char *node_name = NULL;
     char *ip_address = NULL;
@@ -111,6 +243,11 @@ show_mac_handler(
     ser_buff_t * tlv_buff,          // tlv structure described param
     op_mode enable_or_disable       // is command enable or disable function
 ){
+    if(!topo){
+        printf("No Topology loaded / created\n");
+        return -1;
+    }
+
     tlv_struct_t *tlv = NULL;
     char *node_name = NULL;
     char *ip_address = NULL;
@@ -135,6 +272,11 @@ show_mode_handler(
     ser_buff_t * tlv_buff,          // tlv structure described param
     op_mode enable_or_disable       // is command enable or disable function
 ){
+    if(!topo){
+        printf("No Topology loaded / created\n");
+        return -1;
+    }
+
     tlv_struct_t *tlv = NULL;
     char *node_name = NULL;
     char *if_name = NULL;
@@ -171,6 +313,11 @@ show_vlans_handler(
     ser_buff_t * tlv_buff,          // tlv structure described param
     op_mode enable_or_disable       // is command enable or disable function
 ){
+    if(!topo){
+        printf("No Topology loaded / created\n");
+        return -1;
+    }
+
     tlv_struct_t *tlv = NULL;
     char *node_name = NULL;
     char *if_name = NULL;
@@ -202,6 +349,10 @@ show_route_handler(
     ser_buff_t * tlv_buff,          // tlv structure described param
     op_mode enable_or_disable       // is command enable or disable function
 ){
+    if(!topo){
+        printf("No Topology loaded / created\n");
+        return -1;
+    }
     tlv_struct_t *tlv = NULL;
     char *node_name = NULL;
     node_t* node;
@@ -225,6 +376,10 @@ show_debug_handler(
     ser_buff_t * tlv_buff,          // tlv structure described param
     op_mode enable_or_disable       // is command enable or disable function
 ){
+    if(!topo){
+        printf("No Topology loaded / created\n");
+        return -1;
+    }
     tlv_struct_t *tlv = NULL;
     char *node_name = NULL;
     debug_status_t status;
@@ -249,6 +404,10 @@ route_config_handler(
     ser_buff_t * tlv_buff,          // tlv structure described param
     op_mode enable_or_disable       // is command enable or disable function
 ){
+    if(!topo){
+        printf("No Topology loaded / created\n");
+        return -1;
+    }
     tlv_struct_t *tlv = NULL;
     char *node_name = NULL;
     char *dest = NULL;
@@ -295,6 +454,11 @@ config_debug_handler(
     ser_buff_t * tlv_buff,          // tlv structure described param
     op_mode enable_or_disable       // is command enable or disable function
 ){
+    if(!topo){
+        printf("No Topology loaded / created\n");
+        return -1;
+    }
+
     tlv_struct_t *tlv = NULL;
     char *node_name = NULL;
     char *status = NULL;
@@ -325,6 +489,11 @@ mode_set_handler(
     ser_buff_t * tlv_buff,          // tlv structure described param
     op_mode enable_or_disable       // is command enable or disable function
 ){
+    if(!topo){
+        printf("No Topology loaded / created\n");
+        return -1;
+    }
+
     tlv_struct_t *tlv = NULL;
     char *node_name = NULL;
     char *if_name = NULL;
@@ -365,6 +534,11 @@ add_vlan_handler(
     ser_buff_t * tlv_buff,          // tlv structure described param
     op_mode enable_or_disable       // is command enable or disable function
 ){
+    if(!topo){
+        printf("No Topology loaded / created\n");
+        return -1;
+    }
+    
     tlv_struct_t *tlv = NULL;
     char *node_name = NULL;
     char *if_name = NULL;
@@ -400,6 +574,10 @@ remove_vlan_handler(
     ser_buff_t * tlv_buff,          // tlv structure described param
     op_mode enable_or_disable       // is command enable or disable function
 ){
+    if(!topo){
+        printf("No Topology loaded / created\n");
+        return -1;
+    }
     tlv_struct_t *tlv = NULL;
     char *node_name = NULL;
     char *if_name = NULL;
@@ -433,6 +611,10 @@ resolve_arp_handler(
     ser_buff_t * tlv_buff,          // tlv structure described param
     op_mode enable_or_disable       // is command enable or disable function
 ){
+    if(!topo){
+        printf("No Topology loaded / created\n");
+        return -1;
+    }
     tlv_struct_t *tlv = NULL;
     char *node_name = NULL;
     char *ip_address = NULL;
@@ -451,6 +633,49 @@ resolve_arp_handler(
     send_arp_broadcast_rquest(node,NULL,ip_address);
     return 0;
 
+}
+static int
+load_topology_handler(
+    param_t* param,                 //parameter passed to handler call back
+    ser_buff_t * tlv_buff,          // tlv structure described param
+    op_mode enable_or_disable       // is command enable or disable function
+){
+    tlv_struct_t *tlv = NULL;
+    int topology_id;
+    TLV_LOOP_BEGIN(tlv_buff , tlv){
+        if(strcmp(tlv->leaf_id  , "topology-id") == 0)
+            topology_id = atoi(tlv->value) ;
+    }TLV_LOOP_END;
+    switch (topology_id)
+    {
+    case 0:
+        topo = build_first_topo();
+        break;
+    case 1:
+        topo = build_linear_topo();
+        break;
+    case 2:
+        topo = build_simple_l2_switch_topo();
+        break;
+    case 3:
+        topo = build_dualswitch_topo();
+        break;
+    case 4:
+        topo = build_simple_l3_topo();
+        break;
+    default:
+        printf("Invalid Topology Id\n");
+        return -1;
+        break;
+    }
+    printf("Topology Loaded.\n");
+    return 0;
+}
+static int
+validate_topology_id(char* topology_id){
+    if( atoi(topology_id) < 0 || atoi(topology_id) >= NUM_SAVED_TOPOS)
+        return VALIDATION_FAILED;
+    return VALIDATION_SUCCESS;
 }
 static int
 validate_ip_address(char* ip){
@@ -507,6 +732,20 @@ nw_init_cli(){
             init_param( &topology , CMD , "topology" , show_nw_topology_handler ,0 , INVALID , 0 , "Dump Completed Network Topolgy");
             libcli_register_param(show , &topology);
             set_param_cmd_code(&topology , CMDCODE_SHOW_NW_TOPOLOGY);
+            //saved
+            {
+                static param_t saved;
+                init_param( &saved , CMD , "saved" , show_saved_topologies_handler , 0 , INVALID , 0 , "Help : Show topologies saved");
+                libcli_register_param(&topology , &saved);
+                set_param_cmd_code(&saved , CMDCODE_SHOW_TOPOLOGIES_SAVED);
+                // topology-id
+                {
+                    static param_t topology_id;
+                    init_param( &topology_id , LEAF , 0 , show_saved_topologies_handler , validate_topology_id , STRING , "topology-id" , "Help : Topology id");
+                    libcli_register_param(&saved , &topology_id);
+                    set_param_cmd_code(&topology_id , CMDCODE_SHOW_TOPOLOGY_ID);
+                }
+            }
         }
         //node 
         {
@@ -660,6 +899,24 @@ nw_init_cli(){
     }
     //config commands
     {
+        //topology
+        {
+            static param_t topology;
+            init_param(&topology,CMD,"topology",0,0,0,0,"Help : Network Topology Confiugration");
+            libcli_register_param(config , &topology);
+            // topology
+            {
+                static param_t load;
+                init_param(&load,CMD,"load",0,0,INVALID,0,"Help : Load Network Topology");
+                libcli_register_param(&topology , &load);
+                    {
+                        static param_t topology_id;
+                        init_param(&topology_id , LEAF, 0 , load_topology_handler , validate_topology_id, INT , "topology-id" , "Help : ID of topology to load ( show toplogy saved)" );
+                        libcli_register_param(&load, &topology_id);
+                        set_param_cmd_code(&topology_id , CMDCODE_CONFIG_TOPOLOGY_LOAD);
+                    }
+            }
+        }
         //node
         {
             static param_t node;

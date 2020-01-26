@@ -2,12 +2,15 @@
 
 extern void
 network_start_pkt_receiver_thread(graph_t* topo);
+
+graph_t *topo ;
+
 graph_t*
 build_first_topo(){
     #if 0
 
-                            +----------+
-                        0/4 |          |0/0
+                             +----------+
+                         0/4 |          |0/0
             +----------------+   R0_re  +---------------------------+
             |     40.1.1.1/24| 122.1.1.0|20.1.1.1/24                |
             |                +----------+                           |
@@ -25,7 +28,7 @@ build_first_topo(){
     #endif
 
     //Create New Graph
-    graph_t* topo = create_new_graph("My First Graph");
+    topo = create_new_graph("My First Graph");
 
     // //Create Nodes on Graph
     node_t* R0_re = create_graph_node(topo,"R0_re");
@@ -65,7 +68,6 @@ build_linear_topo(){
         +-----------+                        +-----------+                         +-----------+           
     #endif
 
-    graph_t* topo;
     topo = create_new_graph("Linear Topology");
 
     node_t* R0_re = create_graph_node(topo , "R0_re");
@@ -112,7 +114,8 @@ build_simple_l2_switch_topo(){
                                               |   H2   |
                                               +--------+
     #endif
-    graph_t *topo = create_new_graph("Simple L2 Switch Topology");
+    
+    topo = create_new_graph("Simple L2 Switch Topology");
 
     node_t *SW01 = create_graph_node(topo, "SW01");
     node_t *H1 = create_graph_node(topo, "H1");
@@ -134,6 +137,8 @@ build_simple_l2_switch_topo(){
     node_set_intf_ip_address(H2 , "eth0" ,"10.1.1.2" , 24);
     node_set_intf_ip_address(H3 , "eth0" ,"10.1.1.3" , 24);
     node_set_intf_ip_address(H4 , "eth0" ,"10.1.1.4" , 24);
+
+    network_start_pkt_receiver_thread(topo);
 
     return topo;
 }
@@ -162,7 +167,7 @@ build_dualswitch_topo(){
                                               +--------+                                              +--------+                                                                            
     #endif
 
-    graph_t *topo = create_new_graph("Dual Switch Topology");
+    topo = create_new_graph("Dual Switch Topology");
 
     node_t *SW01 = create_graph_node(topo , "SW01");
     node_t *SW02 = create_graph_node(topo , "SW02");
@@ -215,11 +220,9 @@ build_dualswitch_topo(){
     network_start_pkt_receiver_thread(topo);
     return topo;
 }
-
 graph_t*
 build_simple_l3_topo(){
     #if 0
-
                                                           .-''-.                                                
                                            40.1.1.1/24   /      \  20.1.1.1/24                                             
                                 +-----------------------|   R1   |-----------------------+                                             
@@ -230,10 +233,11 @@ build_simple_l3_topo(){
                             /      \ ge0/3                                     ge0/2  /      \                                                                  
                            |   R2   |------------------------------------------------|   R3   |                                                                 
                             \      / 30.1.1..2/24                        30.1.1.3/24  \      /                                                                  
-                             `-..-'                                                    `-..-'       
+                             `-..-'                                                    `-..-'               
                         Lo : 2.2.2.2                                                 Lo : 3.3.3.3              
     #endif
-    graph_t *topo = create_new_graph("Simple Layer 3 Topology");
+    
+    topo = create_new_graph("Simple Layer 3 Topology");
 
     node_t *R1 = create_graph_node(topo , "R1");
     node_t *R2 = create_graph_node(topo , "R2");
