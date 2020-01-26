@@ -18,9 +18,9 @@ main(int argc, char** argv){
     nw_init_cli();
     // topo = build_first_topo();
     // topo = build_linear_topo();
-    // topo = build_simple_l2_switch_topo();
+    topo = build_simple_l2_switch_topo();
     // topo = build_dualswitch_topo();
-    topo = build_simple_l3_topo();
+    // topo = build_simple_l3_topo();
     start_shell();
 
     //test code
