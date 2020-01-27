@@ -672,6 +672,24 @@ load_topology_handler(
     return 0;
 }
 static int
+create_topology_handler(
+    param_t* param,                 //parameter passed to handler call back
+    ser_buff_t * tlv_buff,          // tlv structure described param
+    op_mode enable_or_disable       // is command enable or disable function
+){
+    tlv_struct_t *tlv = NULL;
+    char* topology_name;
+    TLV_LOOP_BEGIN(tlv_buff , tlv){
+        if(strcmp(tlv->leaf_id  , "topology-name") == 0)
+            topology_name = tlv->value ;
+    }TLV_LOOP_END;
+    if(topo)
+        memset(topo , 0 , sizeof(graph_t));
+    topo = create_new_graph(topology_name);
+    printf("Topology Created.\n");
+    return 0;
+}
+static int
 validate_topology_id(char* topology_id){
     if( atoi(topology_id) < 0 || atoi(topology_id) >= NUM_SAVED_TOPOS)
         return VALIDATION_FAILED;
@@ -904,17 +922,32 @@ nw_init_cli(){
             static param_t topology;
             init_param(&topology,CMD,"topology",0,0,0,0,"Help : Network Topology Confiugration");
             libcli_register_param(config , &topology);
-            // topology
+            // load
             {
                 static param_t load;
                 init_param(&load,CMD,"load",0,0,INVALID,0,"Help : Load Network Topology");
                 libcli_register_param(&topology , &load);
+                    //topology-id
                     {
                         static param_t topology_id;
                         init_param(&topology_id , LEAF, 0 , load_topology_handler , validate_topology_id, INT , "topology-id" , "Help : ID of topology to load ( show toplogy saved)" );
                         libcli_register_param(&load, &topology_id);
                         set_param_cmd_code(&topology_id , CMDCODE_CONFIG_TOPOLOGY_LOAD);
                     }
+            }
+            // create
+            {
+                static param_t create;
+                init_param(&create,CMD,"create",0,0,INVALID,0,"Help : Create Network Topology");
+                libcli_register_param(&topology , &create);
+                //topology-id
+                {
+                    static param_t topology_id;
+                    init_param(&topology_id , LEAF, 0 , create_topology_handler , 0, STRING , "topology-name" , "Help : Name of topology to create" );
+                    libcli_register_param(&create, &topology_id);
+                    set_param_cmd_code(&topology_id , CMDCODE_CONFIG_TOPOLOGY_CREATE);
+                }
+                    
             }
         }
         //node
