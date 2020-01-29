@@ -28,14 +28,14 @@ void rt_table_add_route(route_table_t *route_table , char *dst , uint8_t mask , 
     printf("[rt_table_add_route] Adding route : %s / %hhu next-hop %s via %s" , dst , mask , gw , oif_name );
     layer3_route_t *direct_route = calloc(1 , sizeof(layer3_route_t));
 
-    // apply_mask(dst , 32 , direct_route->mask);
-    // direct_route->mask = mask;
-    // direct_route->is_direct = FALSE;
-    // strcpy(direct_route->gw , gw);
-    // strcpy(direct_route->oif , oif_name);
+    apply_mask(dst , 32 , direct_route->mask);
+    direct_route->mask = mask;
+    direct_route->is_direct = FALSE;
+    strcpy(direct_route->gw , gw);
+    strcpy(direct_route->oif , oif_name);
 
-    // init_glthread(&direct_route->l3route_glue);
-    // glthread_add_next(&route_table->route_entries , &direct_route->l3route_glue);
+    init_glthread(&direct_route->l3route_glue);
+    glthread_add_next(&route_table->route_entries , &direct_route->l3route_glue);
 
 }
 layer3_route_t * l3rib_lookup_lpm(route_table_t route_table, uint32_t dest){

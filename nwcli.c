@@ -741,8 +741,7 @@ nw_init_cli(){
     param_t *debug_show = libcli_get_debug_show_hook();
     param_t *root = libcli_get_root();
 
-    //show commands
-   
+    //show
     { 
         //topology
         {
@@ -768,129 +767,57 @@ nw_init_cli(){
         //node 
         {
             static param_t node;
-            init_param(&node,
-                        CMD,
-                        "node",
-                        0,
-                        0,
-                        INVALID,
-                        0,
-                        "Help : node"
-                    );
+            init_param(&node,CMD,"node",0,0,INVALID,0,"Help : node");
             libcli_register_param(show , &node);
             //<node-name>
             {
                 static param_t node_name;
-                init_param(&node_name,
-                        LEAF,
-                        0,
-                        show_node_handler,
-                        0,
-                        STRING,
-                        "node-name",
-                        "Help : Node name"
-                );
+                init_param(&node_name,LEAF,0,show_node_handler,0,STRING,"node-name","Help : Node name");
                 libcli_register_param(&node , &node_name);
                 set_param_cmd_code(&node_name , CMDCODE_SHOW_NODE);
                 //arp
                 {
                     static param_t arp;
-                    init_param(&arp,
-                                CMD,
-                                "arp",
-                                show_arp_handler,
-                                0,
-                                INVALID,
-                                0,
-                                "Show ARP table on node"
-                            );
+                    init_param(&arp,CMD,"arp",show_arp_handler,0,INVALID,0,"Show ARP table on node");
                     libcli_register_param(&node_name , &arp);
                     set_param_cmd_code(&arp , CMDCODE_SHOW_NODE_ARP_TABLE);
                 }
                 //mac-table
                 {
                     static param_t mac_table;
-                    init_param(&mac_table,
-                                CMD,
-                                "mac-table",
-                                show_mac_handler,
-                                0,
-                                INVALID,
-                                0,
-                                "Show MAC table on node"
-                            );
+                    init_param(&mac_table,CMD,"mac-table",show_mac_handler,0,INVALID,0,"Show MAC table on node");
                     libcli_register_param(&node_name , &mac_table);
                     set_param_cmd_code(&mac_table , CMDCODE_SHOW_NODE_MAC_TABLE);
                 } 
                 //debug
                 {
                     static param_t debug_status;
-                    init_param(&debug_status,
-                                CMD,
-                                "debug",
-                                show_debug_handler,
-                                0,
-                                INVALID,
-                                0,
-                                "Show debug status of node"
-                            );
+                    init_param(&debug_status,CMD,"debug",show_debug_handler,0,INVALID,0,"Show debug status of node");
                     libcli_register_param(&node_name , &debug_status);
                     set_param_cmd_code(&debug_status , CMDCODE_SHOW_NODE_DEBUG_STATUS);
                 } 
                 //interface
                 {
                     static param_t interface;
-                    init_param(&interface,
-                                CMD,
-                                "interface",
-                                show_node_interfaces,
-                                0,
-                                INVALID,
-                                0,
-                                "node interface"
-                            );
+                    init_param(&interface,CMD,"interface",show_node_interfaces,0,INVALID,0,"node interface");
                     libcli_register_param(&node_name , &interface);
                     set_param_cmd_code(&interface , CMDCODE_SHOW_NODE_INTERFACES);
                     //interface-name
                     {
                         static param_t interface_name;
-                        init_param(&interface_name,
-                                LEAF,
-                                0,
-                                0,
-                                0,
-                                STRING,
-                                "interface-name",
-                                "Help : Interface Name"
-                        );
+                        init_param(&interface_name,LEAF,0,0,0,STRING,"interface-name","Help : Interface Name");
                         libcli_register_param(&interface , &interface_name);
                         //mode
                         {
                             static param_t mode;
-                            init_param(&mode,
-                                        CMD,
-                                        "mode",
-                                        show_mode_handler,
-                                        0,
-                                        INVALID,
-                                        0,
-                                        "Show Mode of Interface on Node"
-                                    );
+                            init_param(&mode,CMD,"mode",show_mode_handler,0,INVALID,0,"Show Mode of Interface on Node");
                             libcli_register_param(&interface_name , &mode);
                             set_param_cmd_code(&mode , CMDCODE_SHOW_NODE_INTERFACE_MODE);
                         }
                         //vlans
                         {
                             static param_t vlans;
-                            init_param(&vlans,
-                                        CMD,
-                                        "vlans",
-                                        show_vlans_handler,
-                                        0,
-                                        INVALID,
-                                        0,
-                                        "Show Vlan membership of Interface on Node"
-                                    );
+                            init_param(&vlans,CMD,"vlans",show_vlans_handler,0,INVALID,0,"Show Vlan membership of Interface on Node");
                             libcli_register_param(&interface_name , &vlans);
                             set_param_cmd_code(&vlans , CMDCODE_SHOW_NODE_INTERFACE_VLANS);
                         }
@@ -900,22 +827,14 @@ nw_init_cli(){
                 //route
                 {
                     static param_t route;
-                    init_param(&route,
-                                CMD,
-                                "route",
-                                show_route_handler,
-                                0,
-                                INVALID,
-                                0,
-                                "Show Route table on node"
-                            );
+                    init_param(&route,CMD,"route",show_route_handler,0,INVALID,0,"Show Route table on node");
                     libcli_register_param(&node_name , &route);
                     set_param_cmd_code(&route , CMDCODE_SHOW_NODE_ROUTE_TABLE);
                 } 
             }
         }
     }
-    //config commands
+    //config
     {
         //topology
         {
@@ -940,67 +859,35 @@ nw_init_cli(){
                 static param_t create;
                 init_param(&create,CMD,"create",0,0,INVALID,0,"Help : Create Network Topology");
                 libcli_register_param(&topology , &create);
-                //topology-id
-                {
-                    static param_t topology_id;
-                    init_param(&topology_id , LEAF, 0 , create_topology_handler , 0, STRING , "topology-name" , "Help : Name of topology to create" );
-                    libcli_register_param(&create, &topology_id);
-                    set_param_cmd_code(&topology_id , CMDCODE_CONFIG_TOPOLOGY_CREATE);
-                }
+                    //topology-id
+                    {
+                        static param_t topology_id;
+                        init_param(&topology_id , LEAF, 0 , create_topology_handler , 0, STRING , "topology-name" , "Help : Name of topology to create" );
+                        libcli_register_param(&create, &topology_id);
+                        set_param_cmd_code(&topology_id , CMDCODE_CONFIG_TOPOLOGY_CREATE);
+                    }
                     
             }
         }
         //node
         {
             static param_t node;
-            init_param(&node,
-                        CMD,
-                        "node",
-                        0,
-                        0,
-                        INVALID,
-                        0,
-                        "Help : node"
-                    );
+            init_param(&node,CMD,"node",0,0,INVALID,0,"Help : node");
             libcli_register_param(config , &node);
             //node-name
             {
                 static param_t node_name;
-                init_param(&node_name,
-                        LEAF,
-                        0,
-                        0,
-                        0,
-                        STRING,
-                        "node-name",
-                        "Help : Node name"
-                );
+                init_param(&node_name,LEAF,0,0,0,STRING,"node-name","Help : Node name");
                 //debug
                 {
                     libcli_register_param(&node , &node_name);
                     static param_t debug;
-                    init_param(&debug,
-                                CMD,
-                                "debug",
-                                0,
-                                0,
-                                INVALID,
-                                0,
-                                "Help : debug"
-                            );
+                    init_param(&debug,CMD,"debug",0,0,INVALID,0,"Help : debug");
                     libcli_register_param(&node_name , &debug);
                     // status
                     {
                         static param_t status;
-                        init_param(&status,
-                                LEAF,
-                                0,
-                                config_debug_handler,
-                                validate_debug_status,
-                                STRING,
-                                "status",
-                                "Help : Status (oon or off)"
-                        );
+                        init_param(&status,LEAF,0,config_debug_handler,validate_debug_status,STRING,"status","Help : Status (oon or off)");
                         libcli_register_param(&debug , &status);
                         set_param_cmd_code(&status , CMDCODE_CONFIG_NODE_DEBUG);
                     }
@@ -1008,54 +895,22 @@ nw_init_cli(){
                 //interface
                 {
                     static param_t interface;
-                    init_param(&interface,
-                                CMD,
-                                "interface",
-                                0,
-                                0,
-                                INVALID,
-                                0,
-                                "node interface"
-                            );
+                    init_param(&interface,CMD,"interface",0,0,INVALID,0,"node interface");
                     libcli_register_param(&node_name , &interface);
                     //interface-name
                     {
                         static param_t interface_name;
-                        init_param(&interface_name,
-                                LEAF,
-                                0,
-                                0,
-                                0,
-                                STRING,
-                                "interface-name",
-                                "Help : Interface Name"
-                        );
+                        init_param(&interface_name,LEAF,0,0,0,STRING,"interface-name","Help : Interface Name");
                         libcli_register_param(&interface , &interface_name);
                         //mode
                         {
                             static param_t mode;
-                            init_param(&mode,
-                                        CMD,
-                                        "mode",
-                                        0,
-                                        0,
-                                        INVALID,
-                                        0,
-                                        "Show Mode of Interface on Node"
-                                    );
+                            init_param(&mode,CMD,"mode",0,0,INVALID,0,"Show Mode of Interface on Node");
                             libcli_register_param(&interface_name , &mode);
                             //intf_mode
                             {
                                 static param_t intf_mode;
-                                init_param(&intf_mode,
-                                        LEAF,
-                                        0,
-                                        mode_set_handler,
-                                        validate_interface_mode,
-                                        STRING,
-                                        "intf_mode",
-                                        "Help : Set Interface  mode "
-                                );
+                                init_param(&intf_mode,LEAF,0,mode_set_handler,validate_interface_mode,STRING,"intf_mode","Help : Set Interface  mode ");
                                 libcli_register_param(&mode , &intf_mode);
                                 set_param_cmd_code(&intf_mode , CMDCODE_CONFIG_NODE_MODE);
                             }
@@ -1063,69 +918,33 @@ nw_init_cli(){
                         //vlans
                         {
                             static param_t vlans;
-                            init_param(&vlans,
-                                        CMD,
-                                        "vlans",
-                                        0,
-                                        0,
-                                        INVALID,
-                                        0,
-                                        "Show Vlan membership of Interface on Node"
-                                    );
+                            init_param(&vlans,CMD,"vlans",0,0,INVALID,0,"Show Vlan membership of Interface on Node");
                             libcli_register_param(&interface_name , &vlans);
                             //add
                             {
                                 static param_t add;
-                                init_param(&add,
-                                        CMD,
-                                        "add",
-                                        0,
-                                        0,
-                                        INVALID,
-                                        0,
-                                        "Help : Add Vlan to Interface "
-                                );
+                                init_param(&add,CMD,"add",0,0,INVALID,0,"Help : Add Vlan to Interface ");
                                 libcli_register_param(&vlans , &add);
                                 //vlan_id
-                                static param_t vlan_id;
-                                init_param(&vlan_id,
-                                        LEAF,
-                                        0,
-                                        add_vlan_handler,
-                                        0,
-                                        INT,
-                                        "vlan-id",
-                                        "Help : Vlan ID"
-                                );
-                                libcli_register_param(&add , &vlan_id);
-                                set_param_cmd_code(&vlan_id , CMDCODE_CONFIG_NODE_INTERFACE_VLAN_ADD);
+                                {
+                                    static param_t vlan_id;
+                                    init_param(&vlan_id,LEAF,0,add_vlan_handler,0,INT,"vlan-id","Help : Vlan ID");
+                                    libcli_register_param(&add , &vlan_id);
+                                    set_param_cmd_code(&vlan_id , CMDCODE_CONFIG_NODE_INTERFACE_VLAN_ADD);
+                                }
                             }
                             //remove
                             {
                                 static param_t remove;
-                                init_param(&remove,
-                                        CMD,
-                                        "remove",
-                                        0,
-                                        0,
-                                        INVALID,
-                                        0,
-                                        "Help : remove Vlan From Interface "
-                                );
+                                init_param(&remove,CMD,"remove",0,0,INVALID,0,"Help : remove Vlan From Interface ");
                                 libcli_register_param(&vlans , &remove);
                                 //vlan_id
-                                static param_t vlan_id;
-                                init_param(&vlan_id,
-                                        LEAF,
-                                        0,
-                                        remove_vlan_handler,
-                                        0,
-                                        INT,
-                                        "vlan-id",
-                                        "Help : Vlan ID"
-                                );
-                                libcli_register_param(&remove , &vlan_id);
-                                set_param_cmd_code(&vlan_id , CMDCODE_CONFIG_NODE_INTERFACE_VLAN_REMOVE);
+                                {
+                                    static param_t vlan_id;
+                                    init_param(&vlan_id,LEAF,0,remove_vlan_handler,0,INT,"vlan-id","Help : Vlan ID");
+                                    libcli_register_param(&remove , &vlan_id);
+                                    set_param_cmd_code(&vlan_id , CMDCODE_CONFIG_NODE_INTERFACE_VLAN_REMOVE);
+                                }
                             }
                         }
                     }
@@ -1134,68 +953,28 @@ nw_init_cli(){
                 //route
                 {
                     static param_t route;
-                    init_param(&route,
-                                CMD,
-                                "route",
-                                0,
-                                0,
-                                INVALID,
-                                0,
-                                "node route table"
-                            );
+                    init_param(&route,CMD,"route",0,0,INVALID,0,"node route table");
                     libcli_register_param(&node_name , &route);
                     //dest
                     {
                         static param_t dest;
-                        init_param(&dest,
-                                LEAF,
-                                0,
-                                0,
-                                0,
-                                IPV4,
-                                "dest",
-                                "Help : Destination Network"
-                        );
+                        init_param(&dest,LEAF,0,0,0,IPV4,"dest","Help : Destination Network");
                         libcli_register_param(&route , &dest);
                         //mask
                         {
                             static param_t mask;
-                            init_param(&mask,
-                                    LEAF,
-                                    0,
-                                    0,
-                                    validate_mask_handler,
-                                    INT,
-                                    "mask",
-                                    "Help : Net Mask (0 - 32 )"
-                            );
+                            init_param(&mask,LEAF,0,0,validate_mask_handler,INT,"mask","Help : Net Mask (0 - 32 )");
                             libcli_register_param(&dest , &mask);
                             //gw
                             {
                                 static param_t gw;
-                                init_param(&gw,
-                                        LEAF,
-                                        0,
-                                        0,
-                                        0,
-                                        IPV4,
-                                        "gw",
-                                        "Help : Next hop IP"
-                                );
+                                init_param(&gw,LEAF,0,0,0,IPV4,"gw","Help : Next hop IP");
                                 libcli_register_param(&mask , &gw);
                                 // set_param_cmd_code(&gw , CMDCODE_CONFIG_NODE_ROUTE_GW);
                                 //oif
                                 {
                                     static param_t oif;
-                                    init_param(&oif,
-                                            LEAF,
-                                            0,
-                                            route_config_handler,
-                                            0,
-                                            STRING,
-                                            "oif",
-                                            "Help : Egress Interface"
-                                    );
+                                    init_param(&oif,LEAF,0,route_config_handler,0,STRING,"oif","Help : Egress Interface");
                                     libcli_register_param(&gw , &oif);
                                     set_param_cmd_code(&oif , CMDCODE_CONFIG_NODE_ROUTE_OIF);
                                 }
@@ -1206,59 +985,27 @@ nw_init_cli(){
             }
         }
     }
-    //run commands
+    //run
     {
         //node
         {
             static param_t node;
-            init_param(&node,
-                        CMD,
-                        "node",
-                        0,
-                        0,
-                        INVALID,
-                        0,
-                        "Help : node"
-                    );
+            init_param(&node,CMD,"node",0,0,INVALID,0,"Help : node");
             libcli_register_param(run , &node);
             //<node-name>
             {
                 static param_t node_name;
-                init_param(&node_name,
-                        LEAF,
-                        0,
-                        0,
-                        0,
-                        STRING,
-                        "node-name",
-                        "Help : Node name"
-                );
+                init_param(&node_name,LEAF,0,0,0,STRING,"node-name","Help : Node name");
                 libcli_register_param(&node , &node_name);
                 //resolve_arp
                 {
                     static param_t resolve_arp;
-                    init_param(&resolve_arp,
-                                CMD,
-                                "resolve-arp",
-                                0,
-                                0,
-                                INVALID,
-                                0,
-                                "Help : resolve-arp"
-                            );
+                    init_param(&resolve_arp,CMD,"resolve-arp",0,0,INVALID,0,"Help : resolve-arp");
                     libcli_register_param(&node_name , &resolve_arp);
                     //<ip-address>
                     {
                         static param_t ip_address;
-                        init_param(&ip_address,
-                                LEAF,
-                                0,
-                                resolve_arp_handler,
-                                validate_ip_address,
-                                STRING,
-                                "ip-address",
-                                "Help : IP Address"
-                        );
+                        init_param(&ip_address,LEAF,0,resolve_arp_handler,validate_ip_address,STRING,"ip-address","Help : IP Address");
                         libcli_register_param(&resolve_arp , &ip_address);
                         set_param_cmd_code(&ip_address , CMDCODE_RUN_NODE_RESOLVE_ARP);
                     }
