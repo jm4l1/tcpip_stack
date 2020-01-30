@@ -21,7 +21,7 @@ void rt_dump_table(route_table_t *route_table){
     ITERATE_GLTHREAD_BEGIN(&route_table->route_entries , curr){
         if(!curr) return;
         l3route = route_glue_to_l3_route(curr);
-        printf("Dst: %2s/%-4hu %-5s , GW: %s, OIF : %s\n" , l3route->dest , l3route->mask , ( l3route->is_direct ? "directly connected" : "remote subnet" ) , l3route->gw , l3route->oif);
+        printf("Dst: %2s/%-4hhu %-5s , GW: %s, OIF : %s\n" , l3route->dest , l3route->mask , ( l3route->is_direct ? "directly connected" : "remote subnet" ) , l3route->gw , l3route->oif);
     }ITERATE_GLTHREAD_END(&route_table->route_entries , curr)
 };
 void rt_table_add_route(route_table_t *route_table , char *dst , uint8_t mask , char *gw , char *oif_name){

@@ -4,6 +4,7 @@
 #include "cmdcodes.h"
 #include "graph.h"
 #include <stdio.h>
+#include <arpa/inet.h>
 
 #define NUM_SAVED_TOPOS 5
 char* saved_topologies[NUM_SAVED_TOPOS] = { 
@@ -635,6 +636,36 @@ resolve_arp_handler(
 
 }
 static int
+ping_handler(
+    param_t* param,                 //parameter passed to handler call back
+    ser_buff_t * tlv_buff,          // tlv structure described param
+    op_mode enable_or_disable       // is command enable or disable function
+){
+    if(!topo){
+        printf("No Topology loaded / created\n");
+        return -1;
+    }
+    tlv_struct_t *tlv = NULL;
+    char *node_name = NULL;
+    char *ip_address = NULL;
+    node_t* node;
+    TLV_LOOP_BEGIN(tlv_buff , tlv){
+        if(strcmp(tlv->leaf_id  , "node-name") == 0)
+            node_name = tlv->value ;
+        if(strcmp(tlv->leaf_id  , "ip-address") == 0)
+            ip_address = tlv->value ;
+    }TLV_LOOP_END;
+    node = get_node_by_node_name(topo , node_name);
+    if(!node) {
+        printf("Node %s, not found in topology\n", node_name);
+        return -1;
+    }
+    //send_arp_broadcast_rquest(node,NULL,ip_address);
+    printf("Ping handler\n");
+    return 0;
+
+}
+static int
 load_topology_handler(
     param_t* param,                 //parameter passed to handler call back
     ser_buff_t * tlv_buff,          // tlv structure described param
@@ -697,7 +728,11 @@ validate_topology_id(char* topology_id){
 }
 static int
 validate_ip_address(char* ip){
-    return VALIDATION_SUCCESS;
+    uint32_t binary_prefix;
+    int result = inet_pton(AF_INET, ip , &binary_prefix);
+    if(result == 1)
+        return VALIDATION_SUCCESS;
+    return VALIDATION_FAILED;
 }
 static int
 validate_debug_status(char* status){
@@ -997,6 +1032,19 @@ nw_init_cli(){
                 static param_t node_name;
                 init_param(&node_name,LEAF,0,0,0,STRING,"node-name","Help : Node name");
                 libcli_register_param(&node , &node_name);
+                 //ping
+                {
+                    static param_t ping;
+                    init_param(&ping,CMD,"ping",0,0,INVALID,0,"Help : ping");
+                    libcli_register_param(&node_name , &ping);
+                    //<ip-address>
+                    {
+                        static param_t ip_address;
+                        init_param(&ip_address,LEAF,0,ping_handler,validate_ip_address,STRING,"ip-address","Help : IP Address");
+                        libcli_register_param(&ping , &ip_address);
+                        set_param_cmd_code(&ip_address , CMDCODE_RUN_NODE_PING);
+                    }
+                }
                 //resolve_arp
                 {
                     static param_t resolve_arp;
