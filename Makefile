@@ -10,6 +10,7 @@ OBJS=gluethread/glthread.o \
 	  layer2/layer2.o \
 	  layer2/l2switch.o \
 	  layer3/layer3.o \
+	  layer5/ping.o \
 	  net.o \
 	  nwcli.o \
 	  pkt_dump.o \
@@ -20,13 +21,15 @@ ${TARGET}:testapp.o ${OBJS} ${CLILIBDIR}/libcli.a
 testapp.o:testapp.c
 	${CC} ${CFLAGS} -c testapp.c -o testapp.o
 glthread/glthread.o:gluethread/glthread.c
-	${CC} ${CFLAGS} -c -I layer2 layer2/glthread.c -o layer2/glthread.o
+	${CC} ${CFLAGS} -c -I gluethread gluethread/glthread.c -o gluethread/glthread.o
 layer2/layer2.o:layer2/layer2.c
 	${CC} ${CFLAGS} -c -I layer2 layer2/layer2.c -o layer2/layer2.o
 layer3/layer3.o:layer3/layer3.c
 	${CC} ${CFLAGS} -c -I layer3 layer3/layer3.c -o layer3/layer3.o
 layer2/l2switch.o:layer2/l2switch.c
 	${CC} ${CFLAGS} -c -I layer2 layer2/l2switch.c -o layer2/l2switch.o
+layer5/*.o:layer5/*.c
+	${CC} ${CFLAGS} -c -I layer5 $< -o $@ 
 graph.o:graph.c
 	${CC} ${CFLAGS} -c -I . graph.c -o graph.o
 topologies.o:topologies.c

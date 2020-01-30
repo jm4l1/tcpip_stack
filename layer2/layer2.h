@@ -265,12 +265,10 @@ l2_frame_recv_qualify_on_interface(interface_t* intf , ethernet_frame_t* eth_fra
 }
 ethernet_frame_t *
 tag_pkt_with_vlan_id(ethernet_frame_t *eth_frame , uint32_t total_pkt_size , uint16_t vlan_id , uint32_t *new_pkt_size);
-
 ethernet_frame_t *
 untag_pkt_with_vlan_id(ethernet_frame_t *eth_frame , uint32_t total_pkt_size , uint32_t *new_pkt_size);
-
-
 char *
 pkt_buffer_shift_right( char* pkt , unsigned int pkt_size , unsigned int total_buffer_size);
- 
+void
+demote_pkt_to_layer2(node_t *node , uint32_t next_hop_ip , char* pkt, uint32_t pkt_size , uint8_t protocol_number);
 #endif

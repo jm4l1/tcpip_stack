@@ -93,6 +93,7 @@ extern void mac_table_dump( mac_table_t* mac_table);
 extern void set_node_debug_status(node_t* node ,debug_status_t status);
 extern void rt_dump_table(route_table_t *route_table);
 extern void rt_table_add_route(route_table_t *route_table , char *dst , uint8_t mask , char *gw_ip , char *oif_name);
+extern void send_ping_request(node_t *node , char *ip, uint8_t count);
 
 extern graph_t * build_first_topo();
 extern graph_t * build_linear_topo();
@@ -660,8 +661,7 @@ ping_handler(
         printf("Node %s, not found in topology\n", node_name);
         return -1;
     }
-    //send_arp_broadcast_rquest(node,NULL,ip_address);
-    printf("Ping handler\n");
+    send_ping_request(node , ip_address , 5);
     return 0;
 
 }

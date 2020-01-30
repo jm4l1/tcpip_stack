@@ -48,6 +48,15 @@ typedef struct ip_hdr_{
 }ip_hdr_t;
 #pragma pack(pop)
 
+#pragma pack(push ,1)
+typedef struct icmp_hdr_
+{
+    uint8_t type;
+    uint8_t code;
+    uint16_t checksum;
+} icmp_hdr_t;
+#pragma pack(pop)
+
 static inline void
 init_ip_hdr(ip_hdr_t *ip_hdr){
     ip_hdr -> version = 4;
@@ -71,4 +80,6 @@ void rt_dump_table(route_table_t *route_table);
 void rt_table_add_route(route_table_t *route_table , char *dst , uint8_t mask , char *gw_ip , char *oif_name);
 layer3_route_t * l3rib_lookup_lpm(route_table_t route_table , uint32_t dest);
 
+void demote_pkt_to_layer3( node_t *node, char *pkt, uint32_t pkt_sike , uint8_t protocol_number , uint32_t dest_ip_address);
+void promote_pkt_to_later3( node_t *node , interface_t *recv_intf , char *payload , uint32_t app_data_size , uint8_t protocol_number);
 #endif

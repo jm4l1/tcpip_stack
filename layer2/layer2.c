@@ -6,6 +6,9 @@
 
 extern void 
 l2_switch_recv_frame(interface_t *intf, char *pkt , uint32_t pkt_size);
+extern void 
+promote_pkt_to_layer3(node_t *node , interface_t *recv_intf , char *payload , uint32_t app_data_size , uint8_t protocol_number);
+
 char* 
 pkt_buffer_shift_right( char* pkt , unsigned int pkt_size , unsigned int total_buffer_size){
     #if 0
@@ -223,9 +226,6 @@ process_arp_reply_message(node_t *node , interface_t *iif , ethernet_frame_t *et
     arp_table_update_from_arp_reply(node->node_nw_prop.arp_table , (arp_packet_t*) eth_frame->payload , iif);
 }
 static void
-promote_pkt_to_layer3(node_t *node , interface_t *intf ,char *pkt , uint32_t pkt_size ){
-}
-static void
 promote_pkt_to_layer2(node_t *node , interface_t *intf ,ethernet_frame_t *eth_frame , uint32_t pkt_size ){
         uint16_t ethertype = eth_frame ->type;
         switch ( ethertype)
@@ -250,9 +250,13 @@ promote_pkt_to_layer2(node_t *node , interface_t *intf ,ethernet_frame_t *eth_fr
                 break;
 
             default:
-                promote_pkt_to_layer3(node , intf , (char *)eth_frame , pkt_size );
+                promote_pkt_to_layer3(node , intf , (char *)eth_frame , pkt_size ,  eth_frame->type);
                 break;
         }
+}
+void
+demote_pkt_to_layer2(node_t *node , uint32_t next_hop_ip , char* pkt, uint32_t pkt_size , uint8_t protocol_number)
+{
 }
 void
 layer2_frame_recv(node_t* node , interface_t *intf, char *pkt , uint32_t pkt_size){
