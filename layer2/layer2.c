@@ -2,13 +2,17 @@
 #include <stdio.h>
 #include <assert.h>
 #include "../communications.h"
+#include  <arpa/inet.h>
 
 
 extern void 
 l2_switch_recv_frame(interface_t *intf, char *pkt , uint32_t pkt_size);
 extern void 
-promote_pkt_to_layer3(node_t *node , interface_t *recv_intf , char *payload , uint32_t app_data_size , uint8_t protocol_number);
-
+promote_pkt_to_layer3(node_t *node , interface_t *recv_intf , char *payload , uint32_t app_data_size , uint16_t protocol_number);
+extern bool_t
+is_layer3_local_delivery(node_t *node, unsigned int dst_ip);
+extern void
+pkt_dump( ethernet_frame_t *eth_frame , unsigned int pkt_size);
 char* 
 pkt_buffer_shift_right( char* pkt , unsigned int pkt_size , unsigned int total_buffer_size){
     #if 0
@@ -36,6 +40,8 @@ pkt_buffer_shift_right( char* pkt , unsigned int pkt_size , unsigned int total_b
     memset( pkt , 0 , empty_buffer_size);
     return new_pkt;
 }
+extern void
+ip_pkt_dump(char *pkt);
 // Arp Table APIs
 void
 init_arp_table(arp_table_t** arp_table){
@@ -248,15 +254,63 @@ promote_pkt_to_layer2(node_t *node , interface_t *intf ,ethernet_frame_t *eth_fr
                     } 
                 }
                 break;
-
-            default:
-                promote_pkt_to_layer3(node , intf , (char *)eth_frame , pkt_size ,  eth_frame->type);
+            case IP_PROTO:
+                {
+                    if(node->debug_status == DEBUG_ON) printf("[promote_pkt_to_layer2] Info : %s - IP (0x%4x) Packet Received , sending to layer 3 \n" , node->node_name , ethertype);
+                    promote_pkt_to_layer3(node , intf , get_ethernet_frame_payload(eth_frame) ,  pkt_size - get_eth_hdr_size_excl_payload(eth_frame) ,  ethertype);
+                }
                 break;
+            default:
+                    if(node->debug_status == DEBUG_ON) printf("[promote_pkt_to_layer2] Info : %s - Unknown Ethertype 0x%4x \n" , ethertype);
+            ;
         }
 }
+static void
+l2_forward_ip_packet(node_t *node , uint32_t next_hop_ip, char *intf , ethernet_frame_t *eth_frame, uint32_t pkt_size){
+    if(node->debug_status == DEBUG_ON) printf("[l2_forward_ip_packet] - Node %s - starting packet forward.\n", node->node_name);
+    char next_hop_ip_str[16];
+    interface_t *oif;
+    inet_ntop(AF_INET , &next_hop_ip , next_hop_ip_str ,INET_ADDRSTRLEN );
+    if(!intf)
+    {
+        if(is_layer3_local_delivery(node , next_hop_ip))
+        {
+            promote_pkt_to_layer3(node, 0 , get_ethernet_frame_payload(eth_frame) , pkt_size - get_eth_hdr_size_excl_payload(eth_frame) , eth_frame->type);
+            return;
+        }
+        oif = node_get_matching_subnet_interface(node , next_hop_ip_str);
+        if(node->debug_status == DEBUG_ON) printf("[l2_forward_ip_packet] - Node %s - Packet to be fowarded  out interface to %s\n" , node->node_name , oif->if_name , next_hop_ip_str);
+    }
+    else
+    {
+        oif = get_node_if_by_name(node , intf);
+    }
+    
+    if(oif) if(node->debug_status == DEBUG_ON) printf("[l2_forward_ip_packet] - Node %s - interface %s found\n",node->node_name , oif->if_name);
+    arp_entry_t *arp_entry =  arp_table_lookup(node->node_nw_prop.arp_table , next_hop_ip_str);
+    if(!arp_entry)
+    {
+        if(node->debug_status == DEBUG_ON) printf("[l2_forward_ip_packet] - Node %s - no arp entry found for %s\n" ,node->node_name , next_hop_ip_str );
+        return;
+        //resolve arp
+    }
+    memcpy(eth_frame->dest_mac.mac , arp_entry->mac_addr.mac , 6);
+    memcpy(eth_frame->src_mac.mac , IF_MAC(oif), 6);
+    set_common_eth_fcs(eth_frame , pkt_size - ETH_HDR_SIZE_EXCL_PAYLOAD , 0 );
+    send_pkt_out( (char*) eth_frame , pkt_size , oif);
+    return;
+
+}
 void
-demote_pkt_to_layer2(node_t *node , uint32_t next_hop_ip , char* pkt, uint32_t pkt_size , uint8_t protocol_number)
-{
+demote_pkt_to_layer2(node_t *node , uint32_t next_hop_ip , interface_t *intf, char* pkt, uint32_t pkt_size , uint16_t protocol_number)
+{ 
+    if(node->debug_status == DEBUG_ON) printf("[demote_pkt_to_layer2] - protocol number %hu\n" , protocol_number);
+    ethernet_frame_t *eth_frame = ALLOC_ETH_HDR_WITH_PAYLOAD(pkt, pkt_size);
+    eth_frame->type = IP_PROTO;
+
+    if(node->debug_status == DEBUG_ON) printf("[demote_pkt_to_layer2] - eth proto 0x%4x\n", eth_frame->type);
+    if(node->debug_status == DEBUG_ON) printf("[demote_pkt_to_layer2] - L2 frame created for IP Packet\n");
+    l2_forward_ip_packet(node , next_hop_ip , intf->if_name , eth_frame , ETH_HDR_SIZE_EXCL_PAYLOAD + pkt_size);
 }
 void
 layer2_frame_recv(node_t* node , interface_t *intf, char *pkt , uint32_t pkt_size){
@@ -315,7 +369,6 @@ tag_pkt_with_vlan_id(ethernet_frame_t *eth_frame , uint32_t total_pkt_size , uin
 
     return (ethernet_frame_t *)vlan_eth_frame;
 }
-
 ethernet_frame_t *
 untag_pkt_with_vlan_id(ethernet_frame_t *eth_frame , uint32_t total_pkt_size , uint32_t *new_pkt_size){
     uint32_t new_pkt_size_val = total_pkt_size;

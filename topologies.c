@@ -1,4 +1,12 @@
 #include "graph.h"
+#if 0
+                                                     ____
+           ___               .-''-.                .'    `.
+4 lines:  /   \   5 lines:  /      \   6 lines:   /        \
+         |     |           |        |             |        |
+          \___/             \      /              \        /
+                             `-..-'                `.____.'
+#endif
 
 extern void
 network_start_pkt_receiver_thread(graph_t* topo);

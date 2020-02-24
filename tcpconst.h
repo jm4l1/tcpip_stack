@@ -11,6 +11,7 @@
 #define IP_PROTO_LEN 4
 #define IP_PROTO 0x0800
 
+#define ICMP_PROTO 1
 #define ICMP_TYPE_ECHO 8
 #define ICMP_TYPE_ECHO_REPLY 0
 

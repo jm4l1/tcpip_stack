@@ -270,5 +270,5 @@ untag_pkt_with_vlan_id(ethernet_frame_t *eth_frame , uint32_t total_pkt_size , u
 char *
 pkt_buffer_shift_right( char* pkt , unsigned int pkt_size , unsigned int total_buffer_size);
 void
-demote_pkt_to_layer2(node_t *node , uint32_t next_hop_ip , char* pkt, uint32_t pkt_size , uint8_t protocol_number);
+demote_pkt_to_layer2(node_t *node , uint32_t next_hop_ip ,interface_t *intf, char* pkt, uint32_t pkt_size , uint16_t protocol_number);
 #endif

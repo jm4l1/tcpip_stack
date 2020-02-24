@@ -401,7 +401,7 @@ show_debug_handler(
 
 }
 static int
-route_config_handler(
+config_route_handler(
     param_t* param,                 //parameter passed to handler call back
     ser_buff_t * tlv_buff,          // tlv structure described param
     op_mode enable_or_disable       // is command enable or disable function
@@ -446,6 +446,10 @@ route_config_handler(
         return -1;
     }
     route_table = node->node_nw_prop.route_table;
+    if(!route_table){
+        printf("Error accessing route table for node %s\n" , node->node_name);
+        return -1;
+    }
     rt_table_add_route( route_table , dest , mask , gw , oif);
     return 0;
 
@@ -1009,7 +1013,7 @@ nw_init_cli(){
                                 //oif
                                 {
                                     static param_t oif;
-                                    init_param(&oif,LEAF,0,route_config_handler,0,STRING,"oif","Help : Egress Interface");
+                                    init_param(&oif,LEAF,0,config_route_handler,0,STRING,"oif","Help : Egress Interface");
                                     libcli_register_param(&gw , &oif);
                                     set_param_cmd_code(&oif , CMDCODE_CONFIG_NODE_ROUTE_OIF);
                                 }
