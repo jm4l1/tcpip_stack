@@ -33,7 +33,7 @@ void interface_assign_mac_address(interface_t *interface){
 bool_t node_set_loopback_address(node_t* node, char* ip_addr){
     node->node_nw_prop.is_lb_addr_config = TRUE;
     strcpy(node->node_nw_prop.lb_addr.ip_addr , ip_addr);
-    // rt_table_add_direct_route(node->node_nw_prop.route_table , ip_addr , (uint8_t )32);
+    rt_table_add_direct_route(node->node_nw_prop.route_table , ip_addr , (uint8_t )32);
     return TRUE;
 }
 bool_t node_set_intf_ip_address(node_t* node, char* local_if, char* ip_addr , char mask){

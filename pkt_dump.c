@@ -30,8 +30,8 @@ arp_pkt_dump(char * pkt)
 
     char arp_src_ip[16];
     char arp_target_ip[16];
-    convert_ip_from_int_to_str(  htonl(arp_packet->src_ip) ,arp_src_ip);
-    convert_ip_from_int_to_str( htonl(arp_packet->dst_ip) , arp_target_ip);
+    convert_ip_from_int_to_str(  arp_packet->src_ip ,arp_src_ip);
+    convert_ip_from_int_to_str( arp_packet->dst_ip , arp_target_ip);
 
     printf("\t<ARP>\n");
     printf("\tHW Type: %d\n" , arp_packet->hw_type);
@@ -51,8 +51,8 @@ ip_pkt_dump(char *pkt)
     ip_hdr_t *ip_packet = ( ip_hdr_t *)pkt;
     char ip_src_add[16];
     char ip_dest_add[16];
-    convert_ip_from_int_to_str( htonl(ip_packet->src) , ip_src_add);
-    convert_ip_from_int_to_str( htonl(ip_packet->dest) , ip_dest_add);
+    convert_ip_from_int_to_str( ip_packet->src , ip_src_add);
+    convert_ip_from_int_to_str( ip_packet->dest , ip_dest_add);
     printf("\t<IP>\n");
     printf("\tVersion: %hhu\n",ip_packet->version);
     printf("\tHeader Length: %hhu\n",ip_packet->ihl);

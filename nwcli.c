@@ -665,7 +665,7 @@ ping_handler(
         printf("Node %s, not found in topology\n", node_name);
         return -1;
     }
-    send_ping_request(node , ip_address , 5);
+    send_ping_request(node , ip_address , 1);
     return 0;
 
 }

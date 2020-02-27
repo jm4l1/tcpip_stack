@@ -126,6 +126,54 @@ is_layer3_local_delivery(node_t *node, unsigned int dst_ip)
     if(node->debug_status == DEBUG_ON) printf("[is_layer3_local_delivery] - Node %s - IP is not a local delivery\n" , node->node_name);
     return FALSE;
 }
+static icmp_pkt_t *
+make_icmp_time_exceeded(ip_hdr_t *ip_hdr , uint8_t code){
+    icmp_hdr_t *header = calloc(1 , sizeof(icmp_hdr_t));
+    icmp_pkt_t *time_exceeded = calloc(1 , sizeof(icmp_pkt_t));
+    uint32_t data = ip_hdr->dest; 
+    header->type = ICMP_TYPE_TIME_EXCEEDED;
+    header->code = code;
+    header->checksum = 0;
+    header->identifier = NULL;
+    header->seq_num = NULL;
+    memcpy(&time_exceeded->header , header , sizeof(icmp_hdr_t));
+    memset(&time_exceeded->data , 0 , sizeof(uint32_t));
+    memcpy(&time_exceeded->data , &data , sizeof(uint32_t));
+
+    return time_exceeded;
+}
+
+static icmp_pkt_t *
+make_icmp_dest_unreacheable(ip_hdr_t *ip_hdr , uint8_t code)
+{
+    icmp_hdr_t *header = calloc(1 , sizeof(icmp_hdr_t));
+    icmp_pkt_t *dest_unreachable = calloc(1 , sizeof(icmp_pkt_t));
+    uint32_t data = ip_hdr->dest; 
+    header->type = ICMP_TYPE_DEST_UNREACH;
+    header->code = code;
+    header->checksum = 0;
+    header->identifier = NULL;
+    header->seq_num = NULL;
+    memcpy(&dest_unreachable->header , header , sizeof(icmp_hdr_t));
+    memset(&dest_unreachable->data , 0 , sizeof(uint32_t));
+    memcpy(&dest_unreachable->data , &data , sizeof(uint32_t));
+
+    return dest_unreachable;
+}
+void send_icmp_time_exceeded(node_t *node,ip_hdr_t *ip_hdr)
+{
+    if(node->debug_status == DEBUG_ON) printf("[send_icmp_time_exceeded] - creating ICMP Time Exceeded\n");
+    icmp_pkt_t *icmp_time_exceeded = make_icmp_time_exceeded(ip_hdr  , ICMP_CODE_TIME_EXCEEDED_TTL);
+    demote_pkt_to_layer3(node , (char *) icmp_time_exceeded , sizeof(icmp_pkt_t) , ICMP_PROTO , ip_hdr->src);
+    if(node->debug_status == DEBUG_ON) printf("[send_icmp_time_exceeded] - Time Exceeded Packet sent\n");
+}
+void send_icmp_dest_unreacheable(node_t *node,ip_hdr_t *ip_hdr)
+{
+    if(node->debug_status == DEBUG_ON) printf("[send_icmp_dest_unreacheable] - creating Destination Unreachable\n");
+    icmp_pkt_t *icmp_dest_unreacheable = make_icmp_dest_unreacheable(ip_hdr  , ICMP_CODE_DEST_UNREACH_NET);
+    demote_pkt_to_layer3(node , (char *) icmp_dest_unreacheable , sizeof(icmp_pkt_t) , ICMP_PROTO , ip_hdr->src);
+    if(node->debug_status == DEBUG_ON) printf("[send_icmp_dest_unreacheable] - Destination Unreachable Packet sent\n");
+}
 static void
 layer3_pkt_receive_from_top(node_t *node, char *pkt, uint32_t data_size , uint8_t protocol_number , uint32_t dest_ip_address)
 {
@@ -141,30 +189,46 @@ layer3_pkt_receive_from_top(node_t *node, char *pkt, uint32_t data_size , uint8_
     uint32_t new_pkt_size ;
     memset(dest_string , 0 , INET_ADDRSTRLEN);
     inet_ntop(AF_INET , &dest_ip_address , dest_string , INET_ADDRSTRLEN);
-    // printf("destination ip is %s\n", dest_string);
+    // printf("destination ip is %s\n", dest_string);     //src address chosen to be that of the next hop interface 
+    ip_hdr.proto = protocol_number;
+    ip_hdr.ihl = 5;
+    ip_hdr.dest = dest_ip_address; 
     if(!l3_rt){
         if(node->debug_status == DEBUG_ON) printf("[layer3_pkt_receive_from_top] - No route to destination!\n");
+        if(ip_hdr.src == 0 )
+        {
+            inet_pton(AF_INET , NODE_LO_ADDR(node) , &ip_hdr.src);
+        }
+        send_icmp_dest_unreacheable(node,&ip_hdr);
         //send ICMP not route to destination to layer 2
         return;
     }
-    if(node->debug_status == DEBUG_ON) printf("[layer3_pkt_receive_from_top] - Route found to %s via %s!\n" , l3_rt->dest , l3_rt->oif);   
-    ip_hdr.proto = protocol_number;
-    ip_hdr.ihl = 5;
-    ip_hdr.dest = dest_ip_address;
-    //src address chosen to be that of the next hop interface
+    if(node->debug_status == DEBUG_ON) printf("[layer3_pkt_receive_from_top] - Route found to %s via %s!\n" , l3_rt->dest , l3_rt->oif);
     //can aditionally be loop back interface
     if(l3_is_direct_route(l3_rt))
     {
         oif = node_get_matching_subnet_interface(node , l3_rt->dest);
-        if(node->debug_status == DEBUG_ON) printf("[layer3_pkt_receive_from_top] - Direct Route found, will use OIF %s\n" , oif->if_name);
+        if(!oif)
+        {
+            inet_pton(AF_INET , NODE_LO_ADDR(node) ,&src_addr);
+            ip_hdr.src = src_addr;
+            if(node->debug_status == DEBUG_ON) printf("[layer3_pkt_receive_from_top] - Direct Route found, will use Loopback\n");
+        }
+        else
+        {
+            inet_pton(AF_INET , IF_IP(oif) ,&src_addr);
+            ip_hdr.src = src_addr;
+            if(node->debug_status == DEBUG_ON) printf("[layer3_pkt_receive_from_top] - Direct Route found, will use OIF %s\n" , oif->if_name);
+        }
+
     }
     else
     {
         oif = node_get_matching_subnet_interface(node , l3_rt->gw);
         if(node->debug_status == DEBUG_ON) printf("[layer3_pkt_receive_from_top] - Packet will be forwarded, will use OIF %s\n" , oif->if_name);
+        inet_pton(AF_INET , IF_IP(oif) ,&src_addr);
+        ip_hdr.src = src_addr;
     }
-    inet_pton(AF_INET , IF_IP(oif) ,&src_addr);
-    ip_hdr.src = src_addr;
     
     ip_hdr.TTL = 64;
     ip_hdr.version = IPPROTO_IPV4;
@@ -203,8 +267,8 @@ make_icmp_echo_reply(uint16_t identifier , uint16_t seq_num , uint32_t data)
     icmp_hdr_t *header = calloc(1 , sizeof(icmp_hdr_t));
     icmp_pkt_t * echo_reply = calloc(1 , sizeof(icmp_hdr_t) + sizeof(uint32_t));
 
-    header->type = 0;
-    header->code = 0;
+    header->type = ICMP_TYPE_ECHO_REPLY;
+    header->code = ICMP_CODE_ECHO;
     header->checksum = 0;
     header->identifier = identifier;
     header->seq_num = seq_num;
@@ -221,8 +285,8 @@ make_icmp_echo_message(uint16_t identifier , uint16_t seq_num )
     uint32_t data = 0xDEADBEEF;
     icmp_hdr_t *header = calloc(1 , sizeof(icmp_hdr_t));
     icmp_pkt_t * echo_request = calloc(1 , sizeof(icmp_hdr_t) + sizeof(data));
-    header->type = 8;
-    header->code = 0;
+    header->type = ICMP_TYPE_ECHO_MESSAGE;
+    header->code = ICMP_CODE_ECHO;
     header->checksum = 0;
     header->identifier = identifier;
     header->seq_num = seq_num;
@@ -252,22 +316,53 @@ void send_icmp_echo_message (node_t *node, uint16_t identifier , uint16_t seq_nu
 static void
 process_icmp_pkt (node_t *node , ip_hdr_t* ip_hdr ){
     char src_add[INET_ADDRSTRLEN];
+    char dest_add[INET_ADDRSTRLEN];
     uint32_t reply_data;
     char *ip_payload = (char *) ip_hdr + IP_HDR_LEN_IN_BYTES(ip_hdr);
     icmp_pkt_t *icmp_pkt = (icmp_pkt_t *) ip_payload;
+    convert_ip_from_int_to_str(ip_hdr->src, src_add);
     switch (icmp_pkt->header.type)
     {
-    case 0:
+    case ICMP_TYPE_ECHO_REPLY:
         memset(src_add , 0 , INET_ADDRSTRLEN);
-        convert_ip_from_int_to_str(ip_hdr->src, src_add);
         printf("Node %s : %hu bytes received from %s: icmp_seq=%hu ttl=%hhu\n", 
                 node->node_name , IP_HDR_PAYLOAD_SIZE(ip_hdr) , src_add , icmp_pkt->header.seq_num , ip_hdr->TTL);
-        
         break;
-    case 8:
+    
+    case ICMP_TYPE_DEST_UNREACH:
+        memset( dest_add , 0 , INET_ADDRSTRLEN);
+        convert_ip_from_int_to_str(icmp_pkt->data , dest_add);
+        switch (icmp_pkt->header.code)
+            {
+                case ICMP_CODE_DEST_UNREACH_NET:
+                    printf("Node %s : From IP %s ,Destination  Unreachable  (3) %s - %s \n", 
+                        node->node_name , src_add,  dest_add , "Network Unreachable (0)");
+                    break;
+                
+                default:
+                    printf("Node %s : From IP %s ,Destination  Unreachable  %s - %s \n", 
+                            node->node_name , src_add,  dest_add , "Code Unknown");
+                    break;
+            }
+        break;
+    case ICMP_TYPE_ECHO_MESSAGE:
         reply_data = htonl(icmp_pkt->data);
         send_icmp_echo_reply(node ,icmp_pkt->header.identifier , icmp_pkt->header.seq_num ,reply_data , ip_hdr->src );
         break;
+    case ICMP_TYPE_TIME_EXCEEDED:
+        if(node->debug_status == DEBUG_ON) printf("[process_icmp_pkt] - Processing ICMP Packet\n");
+        memset( dest_add , 0 , INET_ADDRSTRLEN);
+        convert_ip_from_int_to_str(icmp_pkt->data , dest_add);
+        switch (icmp_pkt->header.code)
+        {
+            case ICMP_CODE_TIME_EXCEEDED_TTL:
+                printf("Node %s : From IP %s ,TTL Expired In transit - %s \n", 
+                        node->node_name , src_add,  dest_add);
+                break;
+            
+            default:
+                break;
+        }
 
     default:
         break;
@@ -290,6 +385,7 @@ layer3_ip_pkt_recv_from_layer2(node_t *node , interface_t *intf , ip_hdr_t *pkt,
     if(!l3_rt)
     {
        if (node->debug_status == DEBUG_ON) printf("[layer3_ip_pkt_recv_from_layer2] - Node %s - Info : No route found for ip %s\n", node->node_name, dest_ip_add);
+        send_icmp_dest_unreacheable(node,ip_hdr);
         return;
     }
     if (node->debug_status == DEBUG_ON) printf("[layer3_ip_pkt_recv_from_layer2] - Node %s - Info : Route found for ip %s\n", node->node_name,dest_ip_add);
@@ -312,12 +408,6 @@ layer3_ip_pkt_recv_from_layer2(node_t *node , interface_t *intf , ip_hdr_t *pkt,
         else
         {//directly connected host delivery
             if (node->debug_status == DEBUG_ON) printf("[layer3_ip_pkt_recv_from_layer2] - Node %s - Connected host Delivery\n", node->node_name);
-            
-            if((--ip_hdr->TTL) == 0){
-                //drop packet
-                //send ICMP TTL expired
-                return;
-            }
             demote_pkt_to_layer2(node, dest_ip , NULL ,  (char *)ip_hdr , pkt_size, IP_PROTO);
         }
         return;
@@ -325,15 +415,12 @@ layer3_ip_pkt_recv_from_layer2(node_t *node , interface_t *intf , ip_hdr_t *pkt,
     else
     {//forwading case
        if (node->debug_status == DEBUG_ON) printf("[layer3_ip_pkt_recv_from_layer2] - Node %s  : Packet to be forwarded\n", node->node_name);
-        ip_pkt_dump(ip_hdr);
-        if((--ip_hdr->TTL) == 0){
-            //drop packet
-            //send ICMP TTL expired
+        --ip_hdr->TTL;
+        if((ip_hdr->TTL) == 0){
+            send_icmp_time_exceeded(node,ip_hdr);
             return;
         }
-        ip_pkt_dump(ip_hdr);
         inet_pton(AF_INET, l3_rt->gw , &next_hop_add);
-        next_hop_add = htonl(next_hop_add);
         demote_pkt_to_layer2(node, next_hop_add  , l3_rt->oif ,  (char *)ip_hdr , pkt_size , IP_PROTO);
     }
 }

@@ -23,7 +23,7 @@ typedef struct layer3_route_
 GLTHREAD_TO_STRUCT(route_glue_to_l3_route , layer3_route_t , l3route_glue);
 
 #define IP_HDR_LEN_IN_BYTES(ip_hdr_ptr)     ( (ip_hdr_ptr->ihl) * 4)
-#define IP_HDR_TOTAL_LEN_IN_BYTES(ip_hdr_ptr)     ((ip_hdr_ptr->len) * 4)
+#define IP_HDR_TOTAL_LEN_IN_BYTES(ip_hdr_ptr)     ((ip_hdr_ptr->len))
 #define INCREMENT_IPHDR(ip_hdr_ptr)      ( ( char* ) ( ip_hdr +  ((ip_hdr_ptr->ihl) * 4 )) )
 #define IP_HDR_PAYLOAD_SIZE(ip_hdr_ptr)     (IP_HDR_TOTAL_LEN_IN_BYTES(ip_hdr) - IP_HDR_LEN_IN_BYTES(ip_hdr) )
 
