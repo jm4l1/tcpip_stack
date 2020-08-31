@@ -1,9 +1,9 @@
 #ifndef __LAYER2_H__
 #define __LAYER2_H__
 
-#include "../net.h"
-#include "../graph.h"
-#include "../tcpconst.h"
+#include "net.h"
+#include "graph.h"
+#include "tcpconst.h"
 
 #include <stdlib.h>
 #include <stdio.h>

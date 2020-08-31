@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include "../graph.h"
-#include "../layer3/layer3.h"
+#include "graph.h"
+#include "layer3.h"
 #include <arpa/inet.h>
 
 

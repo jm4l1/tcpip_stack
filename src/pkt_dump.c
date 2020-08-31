@@ -1,5 +1,5 @@
-#include "layer2/layer2.h"
-#include "layer3/layer3.h"
+#include "layer2.h"
+#include "layer3.h"
 #include <stdio.h>
 
 void

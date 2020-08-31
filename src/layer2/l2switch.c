@@ -1,8 +1,8 @@
-#include "../gluethread/glthread.h"
-#include "../graph.h"
-#include "../net.h"
+#include "glthread.h"
+#include "graph.h"
+#include "net.h"
 #include "layer2.h"
-#include "../communications.h"
+#include "communications.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>

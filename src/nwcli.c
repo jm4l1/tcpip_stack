@@ -1,6 +1,6 @@
-#include "lib/CommandParser/libcli.h"
-#include "lib/CommandParser/cmdtlv.h"
-#include "lib/CommandParser/css.h"
+#include "libcli.h"
+#include "cmdtlv.h"
+#include "css.h"
 #include "cmdcodes.h"
 #include "graph.h"
 #include <stdio.h>

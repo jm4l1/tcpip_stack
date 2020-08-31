@@ -1,9 +1,9 @@
 #include "layer3.h"
-#include "../utils.h"
-#include "../tcpconst.h"
+#include "utils.h"
+#include "tcpconst.h"
 #include  <arpa/inet.h>
 #include <math.h>
-#include "../communications.h"
+#include "communications.h"
 
 extern void
 demote_pkt_to_layer2(node_t *node , uint32_t next_hop_ip ,interface_t *intf,  char* pkt, uint32_t pkt_size , uint8_t protocol_number);

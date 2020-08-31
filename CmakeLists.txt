@@ -1,0 +1,12 @@
+cmake_minimum_required(VERSION 3.7)
+
+set(project tcpsim)
+project(tcpsim)
+
+add_subdirectory(lib/CommandParser)
+
+include_directories(include "include" "include/gluethread"  "include/layer2" "include/layer3" "include/layer5" "lib/CommandParser/include")
+file(GLOB SOURCES "src/*.c" "src/*/*.c")
+
+add_executable(${project} testapp.c ${SOURCES})
+target_link_libraries( ${project} cli )

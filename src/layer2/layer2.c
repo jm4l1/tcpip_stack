@@ -1,7 +1,7 @@
 #include "layer2.h"
 #include <stdio.h>
 #include <assert.h>
-#include "../communications.h"
+#include "communications.h"
 #include  <arpa/inet.h>
 
 

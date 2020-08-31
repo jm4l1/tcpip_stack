@@ -1,9 +1,9 @@
 #ifndef __LAYER3_H__
 #define __LAYER3_H__
 
-#include "../gluethread/glthread.h"
-#include "../net.h"
-#include "../graph.h"
+#include "glthread.h"
+#include "net.h"
+#include "graph.h"
 
 typedef struct route_table_
 {
