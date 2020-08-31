@@ -105,7 +105,7 @@ void arp_table_delete_entry(arp_table_t *arp_table, char *ip_addr){
     }ITERATE_GLTHREAD_END(&arp_table->arp_entries , curr)
     
 };
-void arp_table_dump( arp_table_t* arp_table){
+void arp_table_dump( arp_table_t *arp_table){
     glthread_t *curr;
     arp_entry_t *arp_entry;
 
@@ -125,6 +125,28 @@ void arp_table_dump( arp_table_t* arp_table){
 
 }
 // Packet Processing APIs
+arp_entry_t * create_arp_sane_entry(arp_table_t *arp_table , char *ip_addr)
+{
+    arp_entry_t *arp_entry = arp_table_lookup(arp_table , ip_addr);
+    if(arp_entry){
+        return arp_entry;
+    }
+    arp_entry = calloc(1 , sizeof(arp_entry_t));
+    strcpy(arp_entry->ip_addr.ip_addr , ip_addr);
+    init_glthread(&arp_entry->arp_pending_list);
+    arp_entry->is_sane = TRUE;
+    bool_t rc = arp_table_entry_add(arp_table , arp_entry);
+    return arp_entry;
+}
+static void add_arp_pending_entry(arp_entry_t *arp_entry, arp_process_fun callback , char *pkt , uint32_t pkt_size)
+{
+    arp_pending_entry_t *arp_pending_entry = calloc( 1 , sizeof(arp_pending_entry_t) + pkt_size);
+    init_glthread(&arp_pending_entry->arp_pending_entry_glue);
+    arp_pending_entry->cb = callback;
+    arp_pending_entry->pkt_size = pkt_size;
+    memcpy(arp_pending_entry->pkt , pkt , pkt_size);
+    glthread_add_next(&arp_entry->arp_pending_list , &arp_pending_entry->arp_pending_entry_glue);
+}
 void send_arp_broadcast_rquest(node_t *node , interface_t *oif , char *ip_addr){
     // if output interface is unknown to the caller 
     if(!oif){
@@ -172,6 +194,16 @@ void send_arp_broadcast_rquest(node_t *node , interface_t *oif , char *ip_addr){
     send_pkt_out( (char *)eth_frame ,eth_frame_size ,oif );
 
     free(eth_frame);
+}
+static void
+pending_arp_processing_callback_function(node_t *node,interface_t *oif, arp_entry_t *arp_entry,arp_pending_entry_t *arp_pending_entry)
+{
+    ethernet_frame_t *eth_frame = (ethernet_frame_t *)arp_pending_entry->pkt;
+    unsigned int pkt_size = arp_pending_entry->pkt_size;
+    memcpy(eth_frame->dest_mac.mac, arp_entry->mac_addr.mac, sizeof(mac_addr_t));
+    memcpy(eth_frame->src_mac.mac, IF_MAC(oif), sizeof(mac_addr_t));
+    set_common_eth_fcs(eth_frame, pkt_size - get_eth_hdr_size_excl_payload(eth_frame), 0);
+    send_pkt_out((char *)eth_frame, pkt_size, oif);
 }
 static void 
 send_arp_reply_msg(ethernet_frame_t *eth_frame_in , interface_t *oif){
@@ -231,6 +263,7 @@ process_arp_reply_message(node_t *node , interface_t *iif , ethernet_frame_t *et
 
     arp_table_update_from_arp_reply(node->node_nw_prop.arp_table , (arp_packet_t*) eth_frame->payload , iif);
 }
+//L2 APIs
 static void
 promote_pkt_to_layer2(node_t *node , interface_t *intf ,ethernet_frame_t *eth_frame , uint32_t pkt_size ){
         uint16_t ethertype = eth_frame ->type;

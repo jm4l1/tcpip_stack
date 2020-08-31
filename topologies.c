@@ -69,30 +69,36 @@ build_first_topo(){
 graph_t*
 build_linear_topo(){
     #if 0
-        +-----------+                        +-----------+                         +-----------+           
-        |           |0/1                  0/2|           |0/3                   0/4|           |           
-        +   R0_re   +------------------------+   R1_re   +-------------------------+   R2_re   +           
-        |           |10.1.1.1/24  10.1.1.2/24|           |20.1.1.2/24   20.1.1.1/24|           |           
-        +-----------+                        +-----------+                         +-----------+           
+        +-----------+                        +-----------+                         +-----------+                         +-----------+           
+        |           |0/1                  0/0|           |0/2                   0/1|           |0/3                   0/2|           |           
+        +     R0    +------------------------+     R1    +-------------------------+     R2    +-------------------------+     R3    +           
+        |           |10.1.1.1/24  10.1.1.2/24|           |20.1.1.2/24   20.1.1.1/24|           |30.1.1.1/24   30.1.1.2/24|           |           
+        +-----------+                        +-----------+                         +-----------+                         +-----------+           
     #endif
 
     topo = create_new_graph("Linear Topology");
 
-    node_t* R0_re = create_graph_node(topo , "R0_re");
-    node_t* R1_re = create_graph_node(topo , "R1_re");
-    node_t* R2_re = create_graph_node(topo , "R2_re");
+    node_t* R0 = create_graph_node(topo , "R0");
+    node_t* R1 = create_graph_node(topo , "R1");
+    node_t* R2 = create_graph_node(topo , "R2");
+    node_t* R3 = create_graph_node(topo , "R3");
 
-    insert_link_between_two_nodes(R0_re,R1_re, "eth0/1" , "eth0/2", 1);
-    insert_link_between_two_nodes(R1_re,R2_re, "eth0/3" , "eth0/4", 1);
 
-    node_set_loopback_address(R0_re , "1.1.1.1");
-    node_set_loopback_address(R1_re , "2.2.2.2");
-    node_set_loopback_address(R2_re , "3.3.3.3");
+    insert_link_between_two_nodes(R0,R1, "eth0/1" , "eth0/0", 1);
+    insert_link_between_two_nodes(R1,R2, "eth0/2" , "eth0/1", 1);
+    insert_link_between_two_nodes(R2,R3, "eth0/3" , "eth0/2", 1);
 
-    node_set_intf_ip_address(R0_re , "eth0/1" , "10.1.1.1" , 24);
-    node_set_intf_ip_address(R1_re , "eth0/2" , "10.1.1.2" , 24);
-    node_set_intf_ip_address(R1_re , "eth0/3" , "20.1.1.2" , 24);
-    node_set_intf_ip_address(R2_re , "eth0/4" , "20.1.1.1" , 24);
+    node_set_loopback_address(R0 , "1.1.1.1");
+    node_set_loopback_address(R1 , "2.2.2.2");
+    node_set_loopback_address(R2 , "3.3.3.3");
+    node_set_loopback_address(R3 , "4.4.4.4");
+
+    node_set_intf_ip_address(R0 , "eth0/1" , "10.1.1.1" , 24);
+    node_set_intf_ip_address(R1 , "eth0/0" , "10.1.1.2" , 24);
+    node_set_intf_ip_address(R1 , "eth0/2" , "20.1.1.2" , 24);
+    node_set_intf_ip_address(R2 , "eth0/1" , "20.1.1.1" , 24);
+    node_set_intf_ip_address(R2 , "eth0/3" , "30.1.1.1" , 24);
+    node_set_intf_ip_address(R3 , "eth0/2" , "30.1.1.2" , 24);
 
     network_start_pkt_receiver_thread(topo);
 

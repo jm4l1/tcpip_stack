@@ -102,7 +102,7 @@ is_layer3_local_delivery(node_t *node, unsigned int dst_ip)
     memset(ip_addr, 0 , INET_ADDRSTRLEN);
     if(node->debug_status == DEBUG_ON) printf("[is_layer3_local_delivery] - Node %s - checking local delivery\n" , node->node_name);
     convert_ip_from_int_to_str(dst_ip , ip_addr);
-
+    printf("Comparing lo %s to %s\n", NODE_LO_ADDR(node) , ip_addr);
     if( strcmp(NODE_LO_ADDR(node) , ip_addr ) == 0)
     {
         if(node->debug_status == DEBUG_ON) printf("[is_layer3_local_delivery] - Node %s - IP is a loopback\n" , node->node_name);

@@ -89,8 +89,6 @@ typedef struct vlan_8021q_tag_ {
 } vlan_8021q_tag_t;
 #pragma pack(pop)
 
-
-
 #pragma pack(push,1)
 typedef struct vlan_tagged_ethernet_frame {
     #if 0
@@ -110,17 +108,30 @@ typedef struct vlan_tagged_ethernet_frame {
     uint32_t FCS;
 } vlan_tagged_ethernet_frame_t;
 #pragma pack(pop)
-
-
+typedef struct arp_pending_entry_ arp_pending_entry_t;
+typedef struct arp_entry_ arp_entry_t; 
 typedef struct arp_table_{
     glthread_t arp_entries;
 }arp_table_t;
-typedef struct arp_entry_ {
+typedef void(*arp_process_fun)(node_t * , interface_t *oif , arp_entry_t * ,arp_pending_entry_t *);
+struct arp_pending_entry_{
+    glthread_t arp_pending_entry_glue;
+    arp_process_fun cb;
+    uint32_t pkt_size;
+    char pkt[0];
+};
+GLTHREAD_TO_STRUCT(arp_glue_to_arp_pending_entry , arp_pending_entry_t , arp_pending_entry_glue);
+
+struct arp_entry_ {
     ip_add_t ip_addr;
     mac_addr_t mac_addr;
     char oif_name[IF_NAME_SIZE];
     glthread_t arp_glue;
-} arp_entry_t;
+
+    //used for auto arp
+    bool_t is_sane;
+    glthread_t arp_pending_list;
+};
 GLTHREAD_TO_STRUCT(arp_glue_to_arp_entry , arp_entry_t , arp_glue);
 
 static inline vlan_tagged_ethernet_frame_t *
@@ -162,6 +173,7 @@ get_eth_hdr_size_excl_payload(ethernet_frame_t* eth_frame){
 void init_arp_table(arp_table_t **arp_table);
 bool_t arp_table_entry_add(arp_table_t *arp_table , arp_entry_t *arp_entry );
 arp_entry_t * arp_table_lookup(arp_table_t *arp_table, char *ip_addr);
+arp_entry_t * create_arp_sane_entry(arp_table_t *arp_table , char *ip_addr);
 void arp_table_update_from_arp_reply(arp_table_t *arp_table_t , arp_packet_t *arp_packet , interface_t *iif);
 void arp_table_delete_entry(arp_table_t *arp_table, char *ip_add);
 void arp_table_dump( arp_table_t* arp_table);
