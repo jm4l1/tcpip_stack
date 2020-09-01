@@ -147,17 +147,17 @@ static void add_arp_pending_entry(arp_entry_t *arp_entry, arp_process_fun callba
     memcpy(arp_pending_entry->pkt , pkt , pkt_size);
     glthread_add_next(&arp_entry->arp_pending_list , &arp_pending_entry->arp_pending_entry_glue);
 }
-void send_arp_broadcast_rquest(node_t *node , interface_t *oif , char *ip_addr){
+void send_arp_broadcast_request(node_t *node , interface_t *oif , char *ip_addr){
     // if output interface is unknown to the caller 
     if(!oif){
         // mactch output interface based on ip_addr subnet
         oif = node_get_matching_subnet_interface(node , ip_addr);
         if(!oif){
-            if(node->debug_status == DEBUG_ON) printf("[send_arp_broadcast_rquest] Info : node %s , No eligble interface found for IP %s\n" , node->node_name , ip_addr);
+            if(node->debug_status == DEBUG_ON) printf("[send_arp_broadcast_request] Info : node %s , No eligble interface found for IP %s\n" , node->node_name , ip_addr);
             return;
         } 
         if(strcmp(ip_addr , IF_IP(oif)) == 0){
-            if(node->debug_status == DEBUG_ON) printf("[send_arp_broadcast_rquest] Error : node %s , Attempting to send Arp for local IP %s on interface OIF : %s \n" , node->node_name , ip_addr, oif->if_name);
+            if(node->debug_status == DEBUG_ON) printf("[send_arp_broadcast_request] Error : node %s , Attempting to send Arp for local IP %s on interface OIF : %s \n" , node->node_name , ip_addr, oif->if_name);
             return;
         }
     }
@@ -190,7 +190,7 @@ void send_arp_broadcast_rquest(node_t *node , interface_t *oif , char *ip_addr){
     uint32_t* eth_fcs = ETH_FCS(eth_frame , ARP_PACKET_SIZE);
     *eth_fcs = 0;
 
-    if (node->debug_status == DEBUG_ON) printf("[send_arp_broadcast_rquest] Info : sending Arp Broadcast from node %s on to IP %s on OIF: %s\n" , node->node_name , ip_addr , oif->if_name);
+    if (node->debug_status == DEBUG_ON) printf("[send_arp_broadcast_request] Info : sending Arp Broadcast from node %s on to IP %s on OIF: %s\n" , node->node_name , ip_addr , oif->if_name);
     send_pkt_out( (char *)eth_frame ,eth_frame_size ,oif );
 
     free(eth_frame);
@@ -347,7 +347,6 @@ demote_pkt_to_layer2(node_t *node , uint32_t next_hop_ip , interface_t *intf, ch
 }
 void
 layer2_frame_recv(node_t* node , interface_t *intf, char *pkt , uint32_t pkt_size){
-
     ethernet_frame_t *eth_frame = (ethernet_frame_t *) pkt;
     uint16_t vlan_to_tag ;
     //Should the node accept Frame

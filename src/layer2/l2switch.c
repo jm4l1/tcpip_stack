@@ -94,7 +94,7 @@ l2_switch_send_pkt_out(char *pkt, unsigned int pkt_size,interface_t *oif){
     }
     ethernet_frame_t *eth_frame = (ethernet_frame_t *) pkt;
     vlan_tagged_ethernet_frame_t *vlan_eth_frame = is_pkt_vlan_tagged(eth_frame);
-    uint16_t vlan_id = NULL;
+    uint16_t vlan_id;
     if(vlan_eth_frame){
         vlan_id = vlan_eth_frame->vlan_8021q_tag.tci_vid;
     }

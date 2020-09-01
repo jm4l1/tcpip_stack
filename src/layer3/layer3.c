@@ -6,7 +6,7 @@
 #include "communications.h"
 
 extern void
-demote_pkt_to_layer2(node_t *node , uint32_t next_hop_ip ,interface_t *intf,  char* pkt, uint32_t pkt_size , uint8_t protocol_number);
+demote_pkt_to_layer2(node_t *node , uint32_t next_hop_ip ,interface_t *intf,  char* pkt, uint32_t pkt_size , uint16_t protocol_number);
 extern char* 
 pkt_buffer_shift_right( char* pkt , unsigned int pkt_size , unsigned int total_buffer_size);
 extern void
@@ -102,7 +102,6 @@ is_layer3_local_delivery(node_t *node, unsigned int dst_ip)
     memset(ip_addr, 0 , INET_ADDRSTRLEN);
     if(node->debug_status == DEBUG_ON) printf("[is_layer3_local_delivery] - Node %s - checking local delivery\n" , node->node_name);
     convert_ip_from_int_to_str(dst_ip , ip_addr);
-    printf("Comparing lo %s to %s\n", NODE_LO_ADDR(node) , ip_addr);
     if( strcmp(NODE_LO_ADDR(node) , ip_addr ) == 0)
     {
         if(node->debug_status == DEBUG_ON) printf("[is_layer3_local_delivery] - Node %s - IP is a loopback\n" , node->node_name);
@@ -134,8 +133,8 @@ make_icmp_time_exceeded(ip_hdr_t *ip_hdr , uint8_t code){
     header->type = ICMP_TYPE_TIME_EXCEEDED;
     header->code = code;
     header->checksum = 0;
-    header->identifier = NULL;
-    header->seq_num = NULL;
+    header->identifier;
+    header->seq_num;
     memcpy(&time_exceeded->header , header , sizeof(icmp_hdr_t));
     memset(&time_exceeded->data , 0 , sizeof(uint32_t));
     memcpy(&time_exceeded->data , &data , sizeof(uint32_t));
@@ -152,8 +151,8 @@ make_icmp_dest_unreacheable(ip_hdr_t *ip_hdr , uint8_t code)
     header->type = ICMP_TYPE_DEST_UNREACH;
     header->code = code;
     header->checksum = 0;
-    header->identifier = NULL;
-    header->seq_num = NULL;
+    header->identifier;
+    header->seq_num;
     memcpy(&dest_unreachable->header , header , sizeof(icmp_hdr_t));
     memset(&dest_unreachable->data , 0 , sizeof(uint32_t));
     memcpy(&dest_unreachable->data , &data , sizeof(uint32_t));
@@ -421,7 +420,7 @@ layer3_ip_pkt_recv_from_layer2(node_t *node , interface_t *intf , ip_hdr_t *pkt,
             return;
         }
         inet_pton(AF_INET, l3_rt->gw , &next_hop_add);
-        demote_pkt_to_layer2(node, next_hop_add  , l3_rt->oif ,  (char *)ip_hdr , pkt_size , IP_PROTO);
+        demote_pkt_to_layer2(node, next_hop_add  , get_node_if_by_name(node ,l3_rt->oif) ,  (char *)ip_hdr , pkt_size , IP_PROTO);
     }
 }
 static void

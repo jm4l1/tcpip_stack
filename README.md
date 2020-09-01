@@ -37,10 +37,6 @@ Interface Name : eth0/1 (IP Routed)
 
 root@juniper> $  run node R1 ping 10.1.1.2
 [send_ping_request] Sending 1 packets to 10.1.1.2
-Comparing lo 2.2.2.2 to 10.1.1.2
-Comparing lo 2.2.2.2 to 10.1.1.2
-Comparing lo 2.2.2.2 to 10.1.1.2
-Comparing lo 2.2.2.2 to 10.1.1.2
 Node R1 : 12 bytes received from : icmp_seq=0 ttl=64
 ```
 

@@ -87,7 +87,7 @@ char* saved_topologies[NUM_SAVED_TOPOS] = {
 
 extern graph_t *topo;
 
-extern void send_arp_broadcast_rquest(node_t *node , interface_t *oif , char *ip_addr);
+extern void send_arp_broadcast_request(node_t *node , interface_t *oif , char *ip_addr);
 extern void arp_table_dump( arp_table_t* arp_table);
 extern void mac_table_dump( mac_table_t* mac_table);
 extern void set_node_debug_status(node_t* node ,debug_status_t status);
@@ -636,7 +636,7 @@ resolve_arp_handler(
         printf("Node %s, not found in topology\n", node_name);
         return -1;
     }
-    send_arp_broadcast_rquest(node,NULL,ip_address);
+    send_arp_broadcast_request(node,NULL,ip_address);
     return 0;
 
 }

@@ -178,7 +178,7 @@ void arp_table_update_from_arp_reply(arp_table_t *arp_table_t , arp_packet_t *ar
 void arp_table_delete_entry(arp_table_t *arp_table, char *ip_add);
 void arp_table_dump( arp_table_t* arp_table);
 
-void send_arp_broadcast_rquest(node_t *node , interface_t *oif , char *ip_addr);
+void send_arp_broadcast_request(node_t *node , interface_t *oif , char *ip_addr);
 
 static inline ethernet_frame_t *
 ALLOC_ETH_HDR_WITH_PAYLOAD(char *pkt, unsigned int pkt_size){

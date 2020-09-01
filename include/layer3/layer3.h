@@ -91,4 +91,5 @@ void demote_pkt_to_layer3( node_t *node, char *pkt, uint32_t data_size , uint8_t
 void promote_pkt_to_layer3( node_t *node , interface_t *recv_intf , char *payload , uint32_t app_data_size , uint16_t protocol_number);
 
 void send_icmp_request (node_t *node, uint16_t identifier , uint16_t seq_num , uint32_t dest_ip );
+void send_icmp_echo_message (node_t *node, uint16_t identifier , uint16_t seq_num , uint32_t dest_ip );
 #endif
