@@ -1,17 +1,20 @@
 #ifndef __UTILS__
 #define __UTILS__
 
-#define IS_MAC_BROADCAST_ADDR(mac_array)  \
-        (mac_array[0] == 0xFF  &&  mac_array[1] == 0xFF && mac_array[2] == 0xFF && \
-         mac_array[3] == 0xFF  &&  mac_array[4] == 0xFF && mac_array[5] == 0xFF)
+#include <stdio.h>
+#include <termios.h>
+#include <unistd.h>
 
-typedef enum{
-  FALSE,
-  TRUE 
-} bool_t;
+#define IS_MAC_BROADCAST_ADDR(mac_array)                                       \
+  (mac_array[0] == 0xFF && mac_array[1] == 0xFF && mac_array[2] == 0xFF &&     \
+   mac_array[3] == 0xFF && mac_array[4] == 0xFF && mac_array[5] == 0xFF)
 
-void
-apply_mask(char* prefix , char mask , char* str_prefix);
-void
-layer2_fill_with_broadcast_mac(char *mac_array);
+typedef enum { FALSE, TRUE } bool_t;
+
+void apply_mask(char *prefix, char mask, char *str_prefix);
+void layer2_fill_with_broadcast_mac(char *mac_array);
+
+void print_termios(struct termios *term);
+void set_raw_mode();
+void restore_mode();
 #endif

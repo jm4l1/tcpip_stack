@@ -1,0 +1,24 @@
+// This file holds option for running the container environment. For a complete list of options
+// with detailed explanations for the values, see https://containers.dev/implementors/json_reference/
+{
+  "name": "tcpip_stack",
+  "build": { "dockerfile": "./Dockerfile" },
+  "postCreateCommand": "if [ -e .devcontainer/setup.sh ]; then /bin/sh .devcontainer/setup.sh; fi",
+  "extensions": [
+    "dbaeumer.vscode-eslint",
+    "eamodio.getlens",
+    "streetsidesoftware.code-spell-checker",
+    "ms-vscode.cpptools"
+  ],
+  "runArgs": [
+    "--name",
+    "tcpip_stack",
+    "--hostname",
+    "tcpip_stack",
+    "--env",
+    "DEBIAN_FRONTEND=noninteractive",
+    "--privileged=true",
+    "--volume",
+    "${localEnv:HOME}:/home/user/.realhome/"
+  ]
+}

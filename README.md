@@ -1,4 +1,4 @@
-# tcpip_stack
+#tcpip_stack
 TCPI/IP network stack simulator implemented in C. The simulator implements Basic Layer 2 (MAC Addresses, Arp) and Layer 3 (Routing , IPs) functionality.
 
 ## Supported Operated Systems
@@ -17,7 +17,7 @@ Implementation works with Linux and MacOS
 ## Running the application
 ```bash
 $./test
-root@juniper> $ show topo saved 1
+root@juniper> $ show topology saved 1
 1 - Linear
 
     +-----------+                        +-----------+                         +-----------+                         +-----------+
@@ -27,7 +27,7 @@ root@juniper> $ show topo saved 1
      +-----------+                        +-----------+                         +-----------+                         +-----------+
 
 
-root@juniper> $ config topo load 1
+root@juniper> $ config topology load 1
 network receiver thread started for topology "Linear Topology"
 Topology Loaded.
 root@juniper> $ show node R0 interface
@@ -39,4 +39,3 @@ root@juniper> $  run node R1 ping 10.1.1.2
 [send_ping_request] Sending 1 packets to 10.1.1.2
 Node R1 : 12 bytes received from : icmp_seq=0 ttl=64
 ```
-
