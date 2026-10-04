@@ -258,7 +258,7 @@ static void layer3_pkt_receive_from_top(node_t *node, char *pkt,
   ip_hdr.len = ((uint16_t)(ip_hdr.ihl * 4)) + ((uint16_t)data_size);
   // calculate checksum
   ip_hdr.checksum = 0;
-  l3_pkt = calloc(1, MAX_PACKET_BUFFER_SIZE);
+  l3_pkt = calloc(1, MAX_PACKET_BUFFER_SIZE + sizeof(uint32_t));
   memcpy(l3_pkt, (char *)&ip_hdr, ip_hdr.ihl * 4);
   memcpy(l3_pkt + (ip_hdr.ihl * 4), pkt, data_size);
   new_pkt_size = ip_hdr.len;
@@ -292,16 +292,15 @@ void demote_pkt_to_layer3(node_t *node, char *pkt, uint32_t data_size,
 }
 static icmp_pkt_t *make_icmp_echo_reply(uint16_t identifier, uint16_t seq_num,
                                         uint32_t data) {
-  icmp_hdr_t *header = calloc(1, sizeof(icmp_hdr_t));
   icmp_pkt_t *echo_reply = calloc(1, sizeof(icmp_hdr_t) + sizeof(uint32_t));
 
-  header->type = ICMP_TYPE_ECHO_REPLY;
-  header->code = ICMP_CODE_ECHO;
-  header->checksum = 0;
-  header->identifier = identifier;
-  header->seq_num = seq_num;
+  memset(&echo_reply->header, 0, sizeof(icmp_hdr_t));
+  echo_reply->header.type = ICMP_TYPE_ECHO_REPLY;
+  echo_reply->header.code = ICMP_CODE_ECHO;
+  echo_reply->header.checksum = 0;
+  echo_reply->header.identifier = identifier;
+  echo_reply->header.seq_num = seq_num;
 
-  memcpy(&echo_reply->header, header, sizeof(icmp_hdr_t));
   memset(&echo_reply->data, 0, sizeof(uint32_t));
   memcpy(&echo_reply->data, &data, sizeof(uint32_t));
 
@@ -310,15 +309,13 @@ static icmp_pkt_t *make_icmp_echo_reply(uint16_t identifier, uint16_t seq_num,
 static icmp_pkt_t *make_icmp_echo_message(uint16_t identifier,
                                           uint16_t seq_num) {
   uint32_t data = 0xDEADBEEF;
-  icmp_hdr_t *header = calloc(1, sizeof(icmp_hdr_t));
   icmp_pkt_t *echo_request = calloc(1, sizeof(icmp_hdr_t) + sizeof(data));
-  header->type = ICMP_TYPE_ECHO_MESSAGE;
-  header->code = ICMP_CODE_ECHO;
-  header->checksum = 0;
-  header->identifier = identifier;
-  header->seq_num = seq_num;
 
-  memcpy(&echo_request->header, header, sizeof(icmp_hdr_t));
+  echo_request->header.type = ICMP_TYPE_ECHO_MESSAGE;
+  echo_request->header.code = ICMP_CODE_ECHO;
+  echo_request->header.checksum = 0;
+  echo_request->header.identifier = identifier;
+  echo_request->header.seq_num = seq_num;
 
   memset(&echo_request->data, 0, sizeof(uint32_t));
   echo_request->data = data;
@@ -337,6 +334,9 @@ void send_icmp_echo_reply(node_t *node, uint16_t identifier, uint16_t seq_num,
                        ICMP_PROTO, dest_ip);
   if (node->debug_status == DEBUG_ON)
     printf("[send_icmp_echo_reply] - Packet %hu sent\n", seq_num);
+  if (icmp_echo_reply) {
+    free(icmp_echo_reply);
+  }
 }
 void send_icmp_echo_message(node_t *node, uint16_t identifier, uint16_t seq_num,
                             uint32_t dest_ip) {
@@ -351,6 +351,10 @@ void send_icmp_echo_message(node_t *node, uint16_t identifier, uint16_t seq_num,
                        ICMP_PROTO, dest_ip);
   if (node->debug_status == DEBUG_ON)
     printf("[send_icmp_echo_message] - Packet %hu sent\n", seq_num);
+
+  if (icmp_echo_message) {
+    free(icmp_echo_message);
+  }
 }
 static void process_icmp_pkt(node_t *node, ip_hdr_t *ip_hdr) {
   char src_add[INET_ADDRSTRLEN];

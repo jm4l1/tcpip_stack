@@ -17,4 +17,5 @@ void layer2_fill_with_broadcast_mac(char *mac_array);
 void print_termios(struct termios *term);
 void set_raw_mode();
 void restore_mode();
+void sleep_for();
 #endif

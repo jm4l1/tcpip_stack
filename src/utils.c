@@ -2,6 +2,7 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <sys/socket.h>
+#include <threads.h>
 
 static struct termios *orig = NULL;
 
@@ -52,4 +53,10 @@ void restore_mode() {
   if (orig != NULL) {
     tcsetattr(STDIN_FILENO, TCSANOW, orig);
   }
+}
+
+void sleep_for(int milliseconds) {
+  thrd_sleep(
+      &(struct timespec){.tv_sec = 0, .tv_nsec = milliseconds * 1000 * 1000},
+      NULL);
 }

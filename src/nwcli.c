@@ -103,7 +103,7 @@ extern void send_ping_request(node_t *node, char *ip, uint8_t count);
 extern graph_t *build_first_topology();
 extern graph_t *build_linear_topology();
 extern graph_t *build_simple_l2_switch_topology();
-extern graph_t *build_dualswitch_topology();
+extern graph_t *build_dual_switch_topology();
 extern graph_t *build_simple_l3_topology();
 
 static int show_nw_topology_handler(
@@ -645,11 +645,14 @@ ping_handler(param_t *param,           // parameter passed to handler call back
   char *node_name = NULL;
   char *ip_address = NULL;
   node_t *node;
+  int count = 1;
   TLV_LOOP_BEGIN(tlv_buff, tlv) {
     if (strcmp(tlv->leaf_id, "node-name") == 0)
       node_name = tlv->value;
     if (strcmp(tlv->leaf_id, "ip-address") == 0)
       ip_address = tlv->value;
+    if (strcmp(tlv->leaf_id, "count") == 0)
+      count = atoi(tlv->value);
   }
   TLV_LOOP_END;
   node = get_node_by_node_name(topology, node_name);
@@ -657,7 +660,7 @@ ping_handler(param_t *param,           // parameter passed to handler call back
     printf("Node %s, not found in topology\n", node_name);
     return -1;
   }
-  send_ping_request(node, ip_address, 1);
+  send_ping_request(node, ip_address, count);
   return 0;
 }
 static int load_topology_handler(
@@ -683,7 +686,7 @@ static int load_topology_handler(
     topology = build_simple_l2_switch_topology();
     break;
   case 3:
-    topology = build_dualswitch_topology();
+    topology = build_dual_switch_topology();
     break;
   case 4:
     topology = build_simple_l3_topology();
@@ -885,7 +888,7 @@ void nw_init_cli() {
 {// topology
  {static param_t topology;
 init_param(&topology, CMD, "topology", 0, 0, 0, 0,
-           "Help : Network Topology Confiugration");
+           "Help : Network Topology Configuration");
 libcli_register_param(config, &topology);
 // load
 {
@@ -898,7 +901,7 @@ libcli_register_param(config, &topology);
     static param_t topology_id;
     init_param(&topology_id, LEAF, 0, load_topology_handler,
                validate_topology_id, INT, "topology-id",
-               "Help : ID of topology to load ( show toplogy saved)");
+               "Help : ID of topology to load ( show topology saved)");
     libcli_register_param(&load, &topology_id);
     set_param_cmd_code(&topology_id, CMDCODE_CONFIG_TOPOLOGY_LOAD);
   }
@@ -1072,10 +1075,17 @@ libcli_register_param(run, &node);
     //<ip-address>
     {
       static param_t ip_address;
-      init_param(&ip_address, LEAF, 0, ping_handler, validate_ip_address,
-                 STRING, "ip-address", "Help : IP Address");
+      init_param(&ip_address, LEAF, 0, 0, validate_ip_address, STRING,
+                 "ip-address", "Help : IP Address");
       libcli_register_param(&ping, &ip_address);
-      set_param_cmd_code(&ip_address, CMDCODE_RUN_NODE_PING);
+      //<count>
+      {
+        static param_t count;
+        init_param(&count, LEAF, 0, ping_handler, 0, INT, "count",
+                   "Help : Number of pings to send");
+        libcli_register_param(&ip_address, &count);
+        set_param_cmd_code(&count, CMDCODE_RUN_NODE_PING);
+      }
     }
   }
   // resolve_arp

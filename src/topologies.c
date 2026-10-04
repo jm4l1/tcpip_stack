@@ -151,7 +151,7 @@ graph_t *build_simple_l2_switch_topology() {
 
   return topology;
 }
-graph_t *build_dualswitch_topology() {
+graph_t *build_dual_switch_topology() {
 #if 0
                                                                                 
                                                +--------+                                              +--------+                                                                             

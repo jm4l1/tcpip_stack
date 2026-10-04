@@ -1,5 +1,6 @@
 #include "layer2.h"
 #include "communications.h"
+#include "utils.h"
 #include <arpa/inet.h>
 #include <assert.h>
 #include <stdio.h>
@@ -61,7 +62,7 @@ bool_t arp_table_entry_add(arp_table_t *arp_table, arp_entry_t *arp_entry) {
       return FALSE;
 
     // if entry exists but ip address is different
-    arp_table_delete_entry(arp_table, arp_entry->ip_addr.ip_addr);
+    arp_table_update_entry(arp_entry_old, arp_entry);
   }
   init_glthread(&arp_entry->arp_glue);
   glthread_add_next(&arp_table->arp_entries, &arp_entry->arp_glue);
@@ -96,6 +97,13 @@ void arp_table_update_from_arp_reply(arp_table_t *arp_table,
   if (entry_added == FALSE)
     free(arp_entry);
 };
+
+void arp_table_update_entry(arp_entry_t *arp_entry_old,
+                            arp_entry_t *arp_entry) {
+  memcpy(arp_entry_old->mac_addr.mac, arp_entry->mac_addr.mac,
+         sizeof(mac_addr_t));
+  strcpy(arp_entry_old->oif_name, arp_entry->oif_name);
+}
 void arp_table_delete_entry(arp_table_t *arp_table, char *ip_addr) {
   glthread_t *curr;
   arp_entry_t *arp_entry;
@@ -171,7 +179,7 @@ void send_arp_broadcast_request(node_t *node, interface_t *oif, char *ip_addr) {
   }
   // allocate buffer for arp packet + ethernet header
   uint32_t eth_frame_size = ETH_HDR_SIZE_EXCL_PAYLOAD + ARP_PACKET_SIZE + 4;
-  ethernet_frame_t *eth_frame = calloc(1, sizeof(eth_frame_size));
+  ethernet_frame_t *eth_frame = calloc(1, eth_frame_size);
   char *if_mac = IF_MAC(oif);
   uint32_t src_ip_l = convert_ip_from_str_to_int(IF_IP(oif));
   uint32_t dst_ip_l = convert_ip_from_str_to_int(ip_addr);
@@ -354,7 +362,7 @@ static void l2_forward_ip_packet(node_t *node, uint32_t next_hop_ip, char *intf,
     }
     oif = node_get_matching_subnet_interface(node, next_hop_ip_str);
     if (node->debug_status == DEBUG_ON)
-      printf("[l2_forward_ip_packet] - Node %s - Packet to be fowarded  out "
+      printf("[l2_forward_ip_packet] - Node %s - Packet to be forwarded out "
              "interface to %s\n",
              node->node_name, oif->if_name, next_hop_ip_str);
   } else {
@@ -367,11 +375,19 @@ static void l2_forward_ip_packet(node_t *node, uint32_t next_hop_ip, char *intf,
              node->node_name, oif->if_name);
   arp_entry_t *arp_entry =
       arp_table_lookup(node->node_nw_prop.arp_table, next_hop_ip_str);
-  if (!arp_entry) {
-    if (node->debug_status == DEBUG_ON)
-      printf("[l2_forward_ip_packet] - Node %s - no arp entry found for %s\n",
-             node->node_name, next_hop_ip_str);
-    return;
+  bool_t arp_sent = FALSE;
+  while (!arp_entry) {
+    if (arp_sent) {
+      if (node->debug_status == DEBUG_ON) {
+        printf("[l2_forward_ip_packet] - Node %s - no arp entry found for %s\n",
+               node->node_name, next_hop_ip_str);
+      }
+      return;
+    }
+    send_arp_broadcast_request(node, oif, next_hop_ip_str);
+    arp_sent = TRUE;
+    sleep_for(50);
+    arp_entry = arp_table_lookup(node->node_nw_prop.arp_table, next_hop_ip_str);
     // resolve arp
   }
   memcpy(eth_frame->dest_mac.mac, arp_entry->mac_addr.mac, 6);

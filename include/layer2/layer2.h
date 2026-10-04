@@ -182,6 +182,7 @@ get_eth_hdr_size_excl_payload(ethernet_frame_t *eth_frame) {
 // ARP Table
 void init_arp_table(arp_table_t **arp_table);
 bool_t arp_table_entry_add(arp_table_t *arp_table, arp_entry_t *arp_entry);
+void arp_table_update_entry(arp_entry_t *arp_entry_old, arp_entry_t *arp_entry);
 arp_entry_t *arp_table_lookup(arp_table_t *arp_table, char *ip_addr);
 arp_entry_t *create_arp_sane_entry(arp_table_t *arp_table, char *ip_addr);
 void arp_table_update_from_arp_reply(arp_table_t *arp_table_t,

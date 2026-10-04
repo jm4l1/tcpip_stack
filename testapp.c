@@ -5,7 +5,7 @@
 extern graph_t *build_first_topology();
 extern graph_t *build_linear_topology();
 extern graph_t *build_simple_l2_switch_topology();
-extern graph_t *build_dualswitch_topology();
+extern graph_t *build_dual_switch_topology();
 extern graph_t *build_simple_l3_topology();
 extern void nw_init_cli();
 extern int send_pkt_out(char *pkt, unsigned int pkt_size, interface_t *intf);
